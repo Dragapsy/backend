@@ -89,5 +89,24 @@ public class StoryService {
         long voteCount = voteRepository.countByChapterId(chapterId);
         return voteCount >= chapter.getVoteThreshold();
     }
-}
 
+    @Transactional(readOnly = true)
+    public List<StoryDTO> getTrendingStories() {
+        return storyRepository.findTrendingStories()
+            .stream()
+            .map(storyMapper::toDto)
+            .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ChapterDTO> getUpcomingChapters() {
+        return chapterRepository.findChaptersNearVoteThreshold()
+            .stream()
+            .map(chapter -> {
+                long voteCount = voteRepository.countByChapterId(chapter.getId());
+                boolean isUnlocked = voteCount >= chapter.getVoteThreshold();
+                return chapterMapper.toDto(chapter, voteCount, isUnlocked);
+            })
+            .toList();
+    }
+}
