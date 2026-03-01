@@ -6,9 +6,8 @@ import com.storyngo.dto.RegisterRequest;
 import com.storyngo.mappers.UserMapper;
 import com.storyngo.models.User;
 import com.storyngo.repositories.UserRepository;
+import com.storyngo.security.JwtUtils;
 import java.time.LocalDateTime;
-import java.util.UUID;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -18,11 +17,13 @@ public class AuthService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtils jwtUtils;
 
-    public AuthService(UserRepository userRepository, UserMapper userMapper) {
+    public AuthService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder, JwtUtils jwtUtils) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
-        this.passwordEncoder = new BCryptPasswordEncoder();
+        this.passwordEncoder = passwordEncoder;
+        this.jwtUtils = jwtUtils;
     }
 
     public AuthResponse register(RegisterRequest request) {
@@ -38,7 +39,7 @@ public class AuthService {
         user.setCreatedAt(LocalDateTime.now());
 
         User saved = userRepository.save(user);
-        return userMapper.toAuthResponse(saved, generateToken());
+        return userMapper.toAuthResponse(saved, jwtUtils.generateToken(saved));
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -49,11 +50,6 @@ public class AuthService {
             throw new IllegalArgumentException("Invalid credentials.");
         }
 
-        return userMapper.toAuthResponse(user, generateToken());
-    }
-
-    private String generateToken() {
-        return UUID.randomUUID().toString();
+        return userMapper.toAuthResponse(user, jwtUtils.generateToken(user));
     }
 }
-
