@@ -1,6 +1,8 @@
 package com.storyngo.services;
 
+import com.storyngo.dto.ChapterCreateRequest;
 import com.storyngo.dto.ChapterDTO;
+import com.storyngo.dto.StoryCreateRequest;
 import com.storyngo.dto.StoryDTO;
 import com.storyngo.dto.StoryDetailsDTO;
 import com.storyngo.mappers.ChapterMapper;
@@ -20,12 +22,19 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class StoryService {
 
+    private static final int FIRST_CHAPTER_VOTE_THRESHOLD = 20;
+    private static final int VOTE_THRESHOLD_DECREMENT = 5;
+    private static final int MIN_VOTE_THRESHOLD = 5;
+    private static final int FIRST_CHAPTER_CHAR_LIMIT = 2000;
+    private static final int CHAR_LIMIT_INCREMENT = 1000;
+
     private final StoryRepository storyRepository;
     private final ChapterRepository chapterRepository;
     private final VoteRepository voteRepository;
     private final UserRepository userRepository;
     private final StoryMapper storyMapper;
     private final ChapterMapper chapterMapper;
+    private final ModerationService moderationService;
 
     public StoryService(
         StoryRepository storyRepository,
@@ -33,7 +42,8 @@ public class StoryService {
         VoteRepository voteRepository,
         UserRepository userRepository,
         StoryMapper storyMapper,
-        ChapterMapper chapterMapper
+        ChapterMapper chapterMapper,
+        ModerationService moderationService
     ) {
         this.storyRepository = storyRepository;
         this.chapterRepository = chapterRepository;
@@ -41,6 +51,7 @@ public class StoryService {
         this.userRepository = userRepository;
         this.storyMapper = storyMapper;
         this.chapterMapper = chapterMapper;
+        this.moderationService = moderationService;
     }
 
     @Transactional(readOnly = true)
@@ -108,5 +119,87 @@ public class StoryService {
                 return chapterMapper.toDto(chapter, voteCount, isUnlocked);
             })
             .toList();
+    }
+
+    @Transactional
+    public StoryDetailsDTO createStory(User author, StoryCreateRequest request) {
+        if (author == null) {
+            throw new IllegalStateException("Authenticated user is required.");
+        }
+        moderationService.validate(request.title());
+        moderationService.validate(request.summary());
+        moderationService.validate(request.content());
+
+        Story story = Story.builder()
+            .title(request.title())
+            .summary(request.summary())
+            .author(author)
+            .createdAt(java.time.LocalDateTime.now())
+            .build();
+
+        Story savedStory = storyRepository.save(story);
+
+        Chapter chapter = Chapter.builder()
+            .story(savedStory)
+            .content(request.content())
+            .orderIndex(1)
+            .isAnonymous(request.isAnonymous())
+            .voteThreshold(FIRST_CHAPTER_VOTE_THRESHOLD)
+            .charLimit(FIRST_CHAPTER_CHAR_LIMIT)
+            .createdAt(java.time.LocalDateTime.now())
+            .build();
+
+        enforceCharLimit(chapter.getContent(), chapter.getCharLimit());
+        Chapter savedChapter = chapterRepository.save(chapter);
+
+        StoryDTO storyDto = storyMapper.toDto(savedStory);
+        ChapterDTO chapterDto = chapterMapper.toDto(savedChapter, 0L, false);
+        return new StoryDetailsDTO(storyDto, java.util.List.of(chapterDto));
+    }
+
+    @Transactional
+    public ChapterDTO addChapter(User author, Long storyId, ChapterCreateRequest request) {
+        if (author == null) {
+            throw new IllegalStateException("Authenticated user is required.");
+        }
+        moderationService.validate(request.content());
+
+        Story story = storyRepository.findById(storyId)
+            .orElseThrow(() -> new IllegalArgumentException("Story not found."));
+
+        Chapter lastChapter = chapterRepository.findByStoryIdOrderByOrderIndexAsc(storyId)
+            .stream()
+            .reduce((first, second) -> second)
+            .orElseThrow(() -> new IllegalStateException("Story has no chapters."));
+
+        long lastVotes = voteRepository.countByChapterId(lastChapter.getId());
+        if (lastVotes < lastChapter.getVoteThreshold()) {
+            throw new IllegalStateException("Previous chapter is not unlocked.");
+        }
+
+        int nextOrder = lastChapter.getOrderIndex() + 1;
+        int nextThreshold = Math.max(MIN_VOTE_THRESHOLD, lastChapter.getVoteThreshold() - VOTE_THRESHOLD_DECREMENT);
+        int nextCharLimit = lastChapter.getCharLimit() + CHAR_LIMIT_INCREMENT;
+
+        enforceCharLimit(request.content(), nextCharLimit);
+
+        Chapter chapter = Chapter.builder()
+            .story(story)
+            .content(request.content())
+            .orderIndex(nextOrder)
+            .isAnonymous(request.isAnonymous())
+            .voteThreshold(nextThreshold)
+            .charLimit(nextCharLimit)
+            .createdAt(java.time.LocalDateTime.now())
+            .build();
+
+        Chapter saved = chapterRepository.save(chapter);
+        return chapterMapper.toDto(saved, 0L, false);
+    }
+
+    private void enforceCharLimit(String content, int charLimit) {
+        if (content != null && content.length() > charLimit) {
+            throw new IllegalArgumentException("Content exceeds the character limit.");
+        }
     }
 }
