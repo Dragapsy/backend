@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -17,7 +18,11 @@ import lombok.Setter;
 @Entity
 @Table(
     name = "votes",
-    uniqueConstraints = @UniqueConstraint(name = "uk_vote_user_chapter", columnNames = {"user_id", "chapter_id"})
+    uniqueConstraints = @UniqueConstraint(name = "uk_vote_user_chapter", columnNames = {"user_id", "chapter_id"}),
+    indexes = {
+        @Index(name = "idx_votes_user_id", columnList = "user_id"),
+        @Index(name = "idx_votes_chapter_id", columnList = "chapter_id")
+    }
 )
 @Getter
 @Setter
@@ -38,4 +43,3 @@ public class Vote {
     @JoinColumn(name = "chapter_id", nullable = false)
     private Chapter chapter;
 }
-

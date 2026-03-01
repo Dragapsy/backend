@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -37,6 +38,9 @@ public class Story {
     @Column(columnDefinition = "TEXT")
     private String summary;
 
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
@@ -45,4 +49,3 @@ public class Story {
     @OneToMany(mappedBy = "story", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Chapter> chapters = new ArrayList<>();
 }
-
