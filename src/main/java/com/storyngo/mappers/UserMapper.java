@@ -13,6 +13,6 @@ public interface UserMapper {
     @Mapping(target = "createdAt", ignore = true)
     User toUser(RegisterRequest request);
 
-    @Mapping(target = "token", ignore = true)
-    AuthResponse toAuthResponse(User user);
+    @Mapping(target = "token", source = "token")
+    AuthResponse toAuthResponse(User user, String token);
 }
