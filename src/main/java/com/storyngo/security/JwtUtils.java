@@ -3,7 +3,6 @@ package com.storyngo.security;
 import com.storyngo.models.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -30,10 +29,10 @@ public class JwtUtils {
         Date expiry = new Date(now.getTime() + expirationMs);
 
         return Jwts.builder()
-            .setSubject(String.valueOf(user.getId()))
-            .setIssuedAt(now)
-            .setExpiration(expiry)
-            .signWith(secretKey, SignatureAlgorithm.HS256)
+            .subject(String.valueOf(user.getId()))
+            .issuedAt(now)
+            .expiration(expiry)
+            .signWith(secretKey)
             .compact();
     }
 
@@ -52,11 +51,10 @@ public class JwtUtils {
     }
 
     private Claims parseClaims(String token) {
-        return Jwts.parserBuilder()
-            .setSigningKey(secretKey)
+        return Jwts.parser()
+            .verifyWith(secretKey)
             .build()
-            .parseClaimsJws(token)
-            .getBody();
+            .parseSignedClaims(token)
+            .getPayload();
     }
 }
-
