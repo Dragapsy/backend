@@ -17,7 +17,7 @@ public class JwtUtils {
     private final long expirationMs;
 
     public JwtUtils(
-        @Value("${security.jwt.secret:change-this-secret-to-32-bytes-minimum}") String secret,
+        @Value("${security.jwt.secret}") String secret,
         @Value("${security.jwt.expiration-ms:3600000}") long expirationMs
     ) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));

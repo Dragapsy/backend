@@ -5,6 +5,10 @@ import com.storyngo.dto.ChapterDTO;
 import com.storyngo.dto.StoryCreateRequest;
 import com.storyngo.dto.StoryDTO;
 import com.storyngo.dto.StoryDetailsDTO;
+import com.storyngo.exceptions.ConflictException;
+import com.storyngo.exceptions.ForbiddenOperationException;
+import com.storyngo.exceptions.ResourceNotFoundException;
+import com.storyngo.exceptions.UnauthorizedException;
 import com.storyngo.mappers.ChapterMapper;
 import com.storyngo.mappers.StoryMapper;
 import com.storyngo.models.Chapter;
@@ -65,7 +69,7 @@ public class StoryService {
     @Transactional(readOnly = true)
     public StoryDetailsDTO getStoryDetails(Long id) {
         Story story = storyRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Story not found."));
+            .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
 
         List<ChapterDTO> chapters = chapterRepository.findByStoryIdOrderByOrderIndexAsc(id)
             .stream()
@@ -82,13 +86,13 @@ public class StoryService {
     @Transactional
     public boolean voteForChapter(Long userId, Long chapterId) {
         if (voteRepository.existsByUserIdAndChapterId(userId, chapterId)) {
-            throw new IllegalStateException("Vote already exists for this user and chapter.");
+            throw new ConflictException("Vote already exists for this user and chapter.");
         }
 
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found."));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found."));
         Chapter chapter = chapterRepository.findById(chapterId)
-            .orElseThrow(() -> new IllegalArgumentException("Chapter not found."));
+            .orElseThrow(() -> new ResourceNotFoundException("Chapter not found."));
 
         Vote vote = Vote.builder()
             .user(user)
@@ -124,11 +128,11 @@ public class StoryService {
     @Transactional
     public StoryDetailsDTO createStory(User author, StoryCreateRequest request) {
         if (author == null) {
-            throw new IllegalStateException("Authenticated user is required.");
+            throw new UnauthorizedException("Authenticated user is required.");
         }
-        moderationService.validate(request.title());
-        moderationService.validate(request.summary());
-        moderationService.validate(request.content());
+        moderationService.validateContent(request.title());
+        moderationService.validateContent(request.summary());
+        moderationService.validateContent(request.content());
 
         Story story = Story.builder()
             .title(request.title())
@@ -160,21 +164,25 @@ public class StoryService {
     @Transactional
     public ChapterDTO addChapter(User author, Long storyId, ChapterCreateRequest request) {
         if (author == null) {
-            throw new IllegalStateException("Authenticated user is required.");
+            throw new UnauthorizedException("Authenticated user is required.");
         }
-        moderationService.validate(request.content());
+        moderationService.validateContent(request.content());
 
         Story story = storyRepository.findById(storyId)
-            .orElseThrow(() -> new IllegalArgumentException("Story not found."));
+            .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
+
+        if (story.getAuthor() == null || !story.getAuthor().getId().equals(author.getId())) {
+            throw new ForbiddenOperationException("Only the story author can add a chapter.");
+        }
 
         Chapter lastChapter = chapterRepository.findByStoryIdOrderByOrderIndexAsc(storyId)
             .stream()
             .reduce((first, second) -> second)
-            .orElseThrow(() -> new IllegalStateException("Story has no chapters."));
+            .orElseThrow(() -> new ConflictException("Story has no chapters."));
 
         long lastVotes = voteRepository.countByChapterId(lastChapter.getId());
         if (lastVotes < lastChapter.getVoteThreshold()) {
-            throw new IllegalStateException("Previous chapter is not unlocked.");
+            throw new ConflictException("Previous chapter is not unlocked.");
         }
 
         int nextOrder = lastChapter.getOrderIndex() + 1;

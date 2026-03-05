@@ -25,3 +25,9 @@ INSERT INTO comments (id, content, user_id, chapter_id, created_at) VALUES
   (1, 'Incroyable ambiance !', 2, 1, CURRENT_TIMESTAMP),
   (2, 'Vite la suite.', 3, 4, CURRENT_TIMESTAMP);
 
+ALTER TABLE users ALTER COLUMN id RESTART WITH 5;
+ALTER TABLE stories ALTER COLUMN id RESTART WITH 3;
+ALTER TABLE chapters ALTER COLUMN id RESTART WITH 6;
+ALTER TABLE votes ALTER COLUMN id RESTART WITH 5;
+ALTER TABLE comments ALTER COLUMN id RESTART WITH 3;
+

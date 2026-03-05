@@ -2,6 +2,8 @@ package com.storyngo.services;
 
 import com.storyngo.dto.CommentCreateRequest;
 import com.storyngo.dto.CommentDTO;
+import com.storyngo.exceptions.ResourceNotFoundException;
+import com.storyngo.exceptions.UnauthorizedException;
 import com.storyngo.models.Chapter;
 import com.storyngo.models.Comment;
 import com.storyngo.models.User;
@@ -40,12 +42,12 @@ public class CommentService {
     @Transactional
     public CommentDTO addComment(User user, Long chapterId, CommentCreateRequest request) {
         if (user == null) {
-            throw new IllegalStateException("Authenticated user is required.");
+            throw new UnauthorizedException("Authenticated user is required.");
         }
-        moderationService.validate(request.content());
+        moderationService.validateContent(request.content());
 
         Chapter chapter = chapterRepository.findById(chapterId)
-            .orElseThrow(() -> new IllegalArgumentException("Chapter not found."));
+            .orElseThrow(() -> new ResourceNotFoundException("Chapter not found."));
 
         Comment comment = Comment.builder()
             .chapter(chapter)
@@ -67,4 +69,3 @@ public class CommentService {
         );
     }
 }
-

@@ -3,6 +3,8 @@ package com.storyngo.services;
 import com.storyngo.dto.AuthResponse;
 import com.storyngo.dto.LoginRequest;
 import com.storyngo.dto.RegisterRequest;
+import com.storyngo.exceptions.ConflictException;
+import com.storyngo.exceptions.UnauthorizedException;
 import com.storyngo.mappers.UserMapper;
 import com.storyngo.models.User;
 import com.storyngo.repositories.UserRepository;
@@ -28,10 +30,10 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email already in use.");
+            throw new ConflictException("Email already in use.");
         }
         if (userRepository.existsByPseudo(request.pseudo())) {
-            throw new IllegalArgumentException("Pseudo already in use.");
+            throw new ConflictException("Pseudo already in use.");
         }
 
         User user = userMapper.toUser(request);
@@ -44,10 +46,10 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.email())
-            .orElseThrow(() -> new IllegalArgumentException("Invalid credentials."));
+            .orElseThrow(() -> new UnauthorizedException("Invalid credentials."));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new IllegalArgumentException("Invalid credentials.");
+            throw new UnauthorizedException("Invalid credentials.");
         }
 
         return userMapper.toAuthResponse(user, jwtUtils.generateToken(user));
