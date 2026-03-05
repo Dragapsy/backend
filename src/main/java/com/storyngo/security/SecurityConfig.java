@@ -26,7 +26,7 @@ public class SecurityConfig {
 
     public SecurityConfig(
         AuthFilter authFilter,
-        @Value("${app.cors.allowed-origin-patterns:http://localhost:*,http://127.0.0.1:*}") String allowedOriginPatterns
+        @Value("${app.cors.allowed-origin-patterns:*}") String allowedOriginPatterns
     ) {
         this.authFilter = authFilter;
         this.allowedOriginPatterns = allowedOriginPatterns;
@@ -53,14 +53,16 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.stream(allowedOriginPatterns.split(","))
+        List<String> originPatterns = Arrays.stream(allowedOriginPatterns.split(","))
             .map(String::trim)
             .filter(origin -> !origin.isEmpty())
-            .toList());
+            .toList();
+
+        configuration.setAllowedOriginPatterns(originPatterns.isEmpty() ? List.of("*") : originPatterns);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(false);
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
