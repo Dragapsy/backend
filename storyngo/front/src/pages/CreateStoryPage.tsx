@@ -1,6 +1,9 @@
 import { useState, type FormEvent } from 'react'
+import { Box, Button, Checkbox, FormControlLabel, Paper, Stack, TextField, Typography } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import { getApiErrorMessage } from '../api/apiClient'
+import { ErrorBanner } from '../components/ErrorBanner'
+import { LoadingState } from '../components/LoadingState'
 import { createStory } from '../api/storyApi'
 
 export function CreateStoryPage() {
@@ -33,70 +36,59 @@ export function CreateStoryPage() {
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h1 className="text-2xl font-semibold text-slate-900">Creation de story</h1>
+    <Paper variant="outlined" sx={{ p: { xs: 3, md: 4 } }}>
+      <Typography variant="h4">Creation de story</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        Publiez une nouvelle intrigue et lancez votre premiere vague de votes.
+      </Typography>
 
-      {error && <p className="mt-4 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>}
+      {error && <Box sx={{ mt: 2 }}><ErrorBanner message={error} compact /></Box>}
+      {submitting && <Box sx={{ mt: 2 }}><LoadingState label="Publication de la story..." compact /></Box>}
 
-      <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
-        <label className="block">
-          <span className="text-sm font-medium text-slate-700">Titre</span>
-          <input
-            type="text"
-            required
-            minLength={3}
-            maxLength={120}
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-emerald-500 focus:ring"
-            placeholder="Le Royaume Oublie"
-          />
-        </label>
+      <Stack component="form" spacing={2} sx={{ mt: 3 }} onSubmit={handleSubmit}>
+        <TextField
+          label="Titre"
+          required
+          inputProps={{ minLength: 3, maxLength: 120 }}
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          placeholder="Le Royaume Oublie"
+          fullWidth
+        />
 
-        <label className="block">
-          <span className="text-sm font-medium text-slate-700">Resume</span>
-          <textarea
-            required
-            maxLength={2000}
-            rows={3}
-            value={summary}
-            onChange={(event) => setSummary(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-emerald-500 focus:ring"
-            placeholder="De quoi parle votre histoire ?"
-          />
-        </label>
+        <TextField
+          label="Resume"
+          required
+          inputProps={{ maxLength: 2000 }}
+          rows={3}
+          multiline
+          value={summary}
+          onChange={(event) => setSummary(event.target.value)}
+          placeholder="De quoi parle votre histoire ?"
+          fullWidth
+        />
 
-        <label className="block">
-          <span className="text-sm font-medium text-slate-700">Contenu du chapitre 1</span>
-          <textarea
-            required
-            maxLength={2000}
-            rows={10}
-            value={content}
-            onChange={(event) => setContent(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-emerald-500 focus:ring"
-            placeholder="Commencez votre chapitre..."
-          />
-        </label>
+        <TextField
+          label="Contenu du chapitre 1"
+          required
+          inputProps={{ maxLength: 2000 }}
+          rows={10}
+          multiline
+          value={content}
+          onChange={(event) => setContent(event.target.value)}
+          placeholder="Commencez votre chapitre..."
+          fullWidth
+        />
 
-        <label className="flex items-center gap-2 text-sm text-slate-700">
-          <input
-            type="checkbox"
-            checked={isAnonymous}
-            onChange={(event) => setIsAnonymous(event.target.checked)}
-            className="h-4 w-4"
-          />
-          Publier anonymement
-        </label>
+        <FormControlLabel
+          control={<Checkbox checked={isAnonymous} onChange={(event) => setIsAnonymous(event.target.checked)} />}
+          label="Publier anonymement"
+        />
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-        >
+        <Button type="submit" disabled={submitting} variant="contained" size="large" sx={{ width: 'fit-content' }}>
           {submitting ? 'Publication...' : 'Publier la story'}
-        </button>
-      </form>
-    </section>
+        </Button>
+      </Stack>
+    </Paper>
   )
 }

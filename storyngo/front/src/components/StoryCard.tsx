@@ -1,3 +1,4 @@
+import { Button, Card, CardActions, CardContent, Chip, Stack, Typography } from '@mui/material'
 import { Link } from 'react-router-dom'
 import type { StoryDTO } from '../types'
 
@@ -7,19 +8,24 @@ interface StoryCardProps {
 
 export function StoryCard({ story }: StoryCardProps) {
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <p className="text-xs uppercase tracking-wide text-emerald-700">Par {story.authorName}</p>
-      <h3 className="mt-1 text-lg font-semibold text-slate-900">{story.title}</h3>
-      <p className="mt-2 line-clamp-3 text-sm text-slate-700">{story.summary}</p>
-      <div className="mt-4 flex items-center justify-between">
-        <span className="text-xs font-medium text-slate-500">{story.chapterCount} chapitres</span>
-        <Link
-          to={`/stories/${story.id}`}
-          className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
-        >
+    <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flexGrow: 1 }}>
+        <Stack spacing={1.2}>
+          <Chip size="small" color="primary" variant="outlined" label={`Par ${story.authorName}`} sx={{ width: 'fit-content' }} />
+          <Typography variant="h6">{story.title}</Typography>
+          <Typography variant="body2" color="text.secondary">
+            {story.summary}
+          </Typography>
+        </Stack>
+      </CardContent>
+      <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
+        <Typography variant="caption" color="text.secondary">
+          {story.chapterCount} chapitres
+        </Typography>
+        <Button component={Link} to={`/stories/${story.id}`} variant="contained" size="small">
           Lire
-        </Link>
-      </div>
-    </article>
+        </Button>
+      </CardActions>
+    </Card>
   )
 }

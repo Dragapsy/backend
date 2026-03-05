@@ -1,9 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  font-family: 'Space Grotesk', 'Avenir Next', 'Segoe UI', sans-serif;
+  --brand-cyan: #0e7490;
+  --brand-cyan-soft: #e0f2fe;
+  --surface-base: #f7fafc;
+  --surface-panel: #ffffff;
+  --text-main: #0f172a;
+
+  font-family: 'Manrope', 'Avenir Next', 'Segoe UI', sans-serif;
   line-height: 1.45;
   font-weight: 400;
   font-synthesis: none;
@@ -16,20 +24,63 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  color: #0f172a;
+  color: var(--text-main);
   background:
-    radial-gradient(circle at 100% 0%, rgba(167, 243, 208, 0.4), transparent 35%),
-    radial-gradient(circle at 0% 100%, rgba(186, 230, 253, 0.45), transparent 45%),
-    #f8fafc;
+    radial-gradient(circle at 8% 4%, rgba(125, 211, 252, 0.38), transparent 28%),
+    radial-gradient(circle at 94% 6%, rgba(253, 224, 71, 0.2), transparent 27%),
+    radial-gradient(circle at 80% 90%, rgba(34, 211, 238, 0.22), transparent 32%),
+    var(--surface-base);
 }
 
 #root {
   min-height: 100vh;
 }
 
+h1,
+h2,
+h3 {
+  font-family: 'Sora', 'Manrope', sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
 .bg-grid-pattern {
   background-image:
     linear-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px),
     linear-gradient(90deg, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
-  background-size: 28px 28px;
+  background-size: 26px 26px;
+}
+
+.animate-fade-up {
+  animation: fadeUp 420ms ease-out both;
+}
+
+.animate-fade-up-delayed {
+  animation: fadeUp 560ms ease-out both;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    background-size: auto, auto, auto, cover;
+  }
+
+  .bg-grid-pattern {
+    background-size: 22px 22px;
+  }
 }

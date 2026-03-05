@@ -1,6 +1,9 @@
 import { useState, type FormEvent } from 'react'
+import { Box, Button, Paper, Stack, TextField, Typography } from '@mui/material'
 import { Link, useNavigate } from 'react-router-dom'
 import { getApiErrorMessage } from '../api/apiClient'
+import { ErrorBanner } from '../components/ErrorBanner'
+import { LoadingState } from '../components/LoadingState'
 import { useUser } from '../context/UserContext'
 
 export function RegisterPage() {
@@ -36,82 +39,66 @@ export function RegisterPage() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h1 className="text-2xl font-semibold text-slate-900">Inscription</h1>
-      <p className="mt-2 text-sm text-slate-600">Creez votre compte pour publier des stories et des chapitres.</p>
+    <Paper variant="outlined" sx={{ mx: 'auto', maxWidth: 560, p: { xs: 3, md: 4 } }}>
+      <Typography variant="h4">Inscription</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        Creez votre compte pour publier des stories et des chapitres.
+      </Typography>
 
-      {error && <p className="mt-4 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>}
+      {error && <Box sx={{ mt: 2 }}><ErrorBanner message={error} compact /></Box>}
+      {loading && <Box sx={{ mt: 2 }}><LoadingState label="Creation du compte..." compact /></Box>}
 
-      <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
-        <label className="block">
-          <span className="text-sm font-medium text-slate-700">Pseudo</span>
-          <input
-            type="text"
-            required
-            minLength={3}
-            maxLength={30}
-            value={pseudo}
-            onChange={(event) => setPseudo(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-emerald-500 focus:ring"
-            placeholder="DragonWriter"
-          />
-        </label>
+      <Stack component="form" spacing={2} sx={{ mt: 3 }} onSubmit={handleSubmit}>
+        <TextField
+          label="Pseudo"
+          required
+          inputProps={{ minLength: 3, maxLength: 30 }}
+          value={pseudo}
+          onChange={(event) => setPseudo(event.target.value)}
+          placeholder="DragonWriter"
+          fullWidth
+        />
 
-        <label className="block">
-          <span className="text-sm font-medium text-slate-700">Email</span>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-emerald-500 focus:ring"
-            placeholder="vous@storyngo.dev"
-          />
-        </label>
+        <TextField
+          label="Email"
+          type="email"
+          required
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="vous@storyngo.dev"
+          fullWidth
+        />
 
-        <label className="block">
-          <span className="text-sm font-medium text-slate-700">Mot de passe</span>
-          <input
-            type="password"
-            required
-            minLength={8}
-            maxLength={72}
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-emerald-500 focus:ring"
-            placeholder="Minimum 8 caracteres"
-          />
-        </label>
+        <TextField
+          label="Mot de passe"
+          type="password"
+          required
+          inputProps={{ minLength: 8, maxLength: 72 }}
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          placeholder="Minimum 8 caracteres"
+          fullWidth
+        />
 
-        <label className="block">
-          <span className="text-sm font-medium text-slate-700">Confirmer le mot de passe</span>
-          <input
-            type="password"
-            required
-            minLength={8}
-            maxLength={72}
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-emerald-500 focus:ring"
-            placeholder="Retapez votre mot de passe"
-          />
-        </label>
+        <TextField
+          label="Confirmer le mot de passe"
+          type="password"
+          required
+          inputProps={{ minLength: 8, maxLength: 72 }}
+          value={confirmPassword}
+          onChange={(event) => setConfirmPassword(event.target.value)}
+          placeholder="Retapez votre mot de passe"
+          fullWidth
+        />
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-        >
+        <Button type="submit" disabled={loading} variant="contained" size="large" fullWidth>
           {loading ? 'Inscription...' : 'Creer mon compte'}
-        </button>
-      </form>
+        </Button>
+      </Stack>
 
-      <p className="mt-4 text-sm text-slate-600">
-        Deja inscrit ?{' '}
-        <Link to="/login" className="font-semibold text-emerald-700 underline">
-          Se connecter
-        </Link>
-      </p>
-    </section>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 2.5 }}>
+        Deja inscrit ? <Link to="/login">Se connecter</Link>
+      </Typography>
+    </Paper>
   )
 }

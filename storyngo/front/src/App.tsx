@@ -1,4 +1,9 @@
 import { BookOpenText } from 'lucide-react'
+import AddIcon from '@mui/icons-material/Add'
+import LoginIcon from '@mui/icons-material/Login'
+import LogoutIcon from '@mui/icons-material/Logout'
+import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1'
+import { AppBar, Box, Button, Chip, Container, Toolbar, Typography } from '@mui/material'
 import type { ReactElement } from 'react'
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useUser } from './context/UserContext'
@@ -34,52 +39,55 @@ function App() {
   const { isAuthenticated, user, logout } = useUser()
 
   return (
-    <div className="min-h-screen bg-grid-pattern">
-      <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-8">
-        <header className="mb-8 flex items-center justify-between rounded-2xl border border-slate-200 bg-white/85 px-4 py-3 shadow-sm backdrop-blur">
-          <Link to="/" className="inline-flex items-center gap-2 text-slate-900">
-            <BookOpenText className="h-5 w-5 text-emerald-600" />
-            <span className="text-lg font-semibold tracking-tight">Storyn'Go Front</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            {isAuthenticated ? (
-              <>
-                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-800">
-                  {user?.pseudo}
-                </span>
-                <Link
-                  to="/stories/create"
-                  className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
-                >
-                  Creer
-                </Link>
-                <button
-                  type="button"
-                  onClick={logout}
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-                >
-                  Login
-                </Link>
-                <Link
-                  to="/register"
-                  className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
-                >
-                  Register
-                </Link>
-              </>
-            )}
-          </div>
-        </header>
+    <Box sx={{ minHeight: '100vh' }}>
+      <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: '1px solid #e2e8f0' }}>
+        <Container maxWidth="lg">
+          <Toolbar disableGutters sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+            <Button
+              component={Link}
+              to="/"
+              color="inherit"
+              sx={{ display: 'inline-flex', alignItems: 'center', gap: 1.2, px: 1 }}
+            >
+              <BookOpenText size={20} />
+              <Typography variant="h6" fontWeight={700}>
+                Storyn'Go Platform
+              </Typography>
+            </Button>
 
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
+              {isAuthenticated ? (
+                <>
+                  <Chip label={user?.pseudo} color="primary" variant="outlined" />
+                  <Button component={Link} to="/stories/create" variant="contained" startIcon={<AddIcon />}>
+                    Creer
+                  </Button>
+                  <Button variant="outlined" color="secondary" onClick={logout} startIcon={<LogoutIcon />}>
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button component={Link} to="/login" variant="outlined" color="secondary" startIcon={<LoginIcon />}>
+                    Login
+                  </Button>
+                  <Button
+                    component={Link}
+                    to="/register"
+                    variant="contained"
+                    color="primary"
+                    startIcon={<PersonAddAlt1Icon />}
+                  >
+                    Register
+                  </Button>
+                </>
+              )}
+            </Box>
+          </Toolbar>
+        </Container>
+      </AppBar>
+
+      <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 } }}>
         <main>
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -111,8 +119,8 @@ function App() {
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </main>
-      </div>
-    </div>
+      </Container>
+    </Box>
   )
 }
 

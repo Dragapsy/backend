@@ -129,6 +129,38 @@ class StoryServiceTests {
     }
 
     @Test
+    void addChapter_rejectsWhenAnyPreviousChapterIsLocked() {
+        User author = User.builder().id(1L).build();
+        Story story = Story.builder().id(100L).author(author).build();
+
+        Chapter chapter1 = Chapter.builder()
+            .id(201L)
+            .orderIndex(1)
+            .voteThreshold(20)
+            .charLimit(2000)
+            .build();
+
+        Chapter chapter2 = Chapter.builder()
+            .id(202L)
+            .orderIndex(2)
+            .voteThreshold(15)
+            .charLimit(3000)
+            .build();
+
+        when(storyRepository.findById(100L)).thenReturn(Optional.of(story));
+        when(chapterRepository.findByStoryIdOrderByOrderIndexAsc(100L)).thenReturn(List.of(chapter1, chapter2));
+        when(voteRepository.countByChapterId(201L)).thenReturn(19L);
+
+        ConflictException ex = assertThrows(
+            ConflictException.class,
+            () -> storyService.addChapter(author, 100L, new ChapterCreateRequest("suite", false))
+        );
+
+        assertEquals("All previous chapters must be unlocked.", ex.getMessage());
+        verify(chapterRepository, never()).save(any(Chapter.class));
+    }
+
+    @Test
     void addChapter_usesMinThresholdAndIncrementsLimit() {
         User author = User.builder().id(1L).build();
         Story story = Story.builder().id(100L).author(author).build();

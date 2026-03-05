@@ -175,15 +175,18 @@ public class StoryService {
             throw new ForbiddenOperationException("Only the story author can add a chapter.");
         }
 
-        Chapter lastChapter = chapterRepository.findByStoryIdOrderByOrderIndexAsc(storyId)
-            .stream()
-            .reduce((first, second) -> second)
-            .orElseThrow(() -> new ConflictException("Story has no chapters."));
-
-        long lastVotes = voteRepository.countByChapterId(lastChapter.getId());
-        if (lastVotes < lastChapter.getVoteThreshold()) {
-            throw new ConflictException("Previous chapter is not unlocked.");
+        List<Chapter> orderedChapters = chapterRepository.findByStoryIdOrderByOrderIndexAsc(storyId);
+        if (orderedChapters.isEmpty()) {
+            throw new ConflictException("Story has no chapters.");
         }
+
+        boolean hasLockedChapter = orderedChapters.stream()
+            .anyMatch(chapter -> voteRepository.countByChapterId(chapter.getId()) < chapter.getVoteThreshold());
+        if (hasLockedChapter) {
+            throw new ConflictException("All previous chapters must be unlocked.");
+        }
+
+        Chapter lastChapter = orderedChapters.get(orderedChapters.size() - 1);
 
         int nextOrder = lastChapter.getOrderIndex() + 1;
         int nextThreshold = Math.max(MIN_VOTE_THRESHOLD, lastChapter.getVoteThreshold() - VOTE_THRESHOLD_DECREMENT);

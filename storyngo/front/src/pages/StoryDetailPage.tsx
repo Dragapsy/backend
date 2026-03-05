@@ -3,6 +3,9 @@ import { Link, useParams } from 'react-router-dom'
 import { getApiErrorMessage } from '../api/apiClient'
 import { addChapter, addComment, getComments, getStoryDetails, voteChapter } from '../api/storyApi'
 import { ChapterCard } from '../components/ChapterCard'
+import { EmptyState } from '../components/EmptyState'
+import { ErrorBanner } from '../components/ErrorBanner'
+import { LoadingState } from '../components/LoadingState'
 import { useUser } from '../context/UserContext'
 import type { CommentDTO, StoryDetailsDTO } from '../types'
 
@@ -109,13 +112,13 @@ export function StoryDetailPage() {
   }
 
   if (loading) {
-    return <p className="text-sm text-slate-600">Chargement de la story...</p>
+    return <LoadingState label="Chargement de la story..." />
   }
 
   if (error || !storyDetails) {
     return (
       <div className="space-y-4">
-        <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error ?? 'Story introuvable.'}</p>
+        <ErrorBanner message={error ?? 'Story introuvable.'} />
         <Link to="/" className="text-sm font-semibold text-slate-700 underline">
           Retour au dashboard
         </Link>
@@ -129,7 +132,7 @@ export function StoryDetailPage() {
         Retour au dashboard
       </Link>
 
-      <header className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <header className="rounded-3xl border border-slate-200/80 bg-white/90 p-6 shadow-sm backdrop-blur md:p-7">
         <p className="text-xs uppercase tracking-wide text-slate-500">Story #{storyDetails.story.id}</p>
         <h1 className="mt-2 text-3xl font-semibold text-slate-900">{storyDetails.story.title}</h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-700">{storyDetails.story.summary}</p>
@@ -151,7 +154,7 @@ export function StoryDetailPage() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm backdrop-blur">
         <h2 className="text-xl font-semibold text-slate-900">Commentaires</h2>
         {storyDetails.chapters.length > 0 ? (
           <>
@@ -172,8 +175,8 @@ export function StoryDetailPage() {
               </select>
             </label>
 
-            {loadingComments && <p className="mt-3 text-sm text-slate-600">Chargement des commentaires...</p>}
-            {commentsError && <p className="mt-3 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{commentsError}</p>}
+            {loadingComments && <div className="mt-3"><LoadingState label="Chargement des commentaires..." compact /></div>}
+            {commentsError && <div className="mt-3"><ErrorBanner message={commentsError} compact /></div>}
 
             <div className="mt-4 space-y-3">
               {comments.map((comment) => (
@@ -185,7 +188,10 @@ export function StoryDetailPage() {
                 </article>
               ))}
               {!loadingComments && comments.length === 0 && (
-                <p className="text-sm text-slate-600">Aucun commentaire sur ce chapitre pour le moment.</p>
+                <EmptyState
+                  title="Aucun commentaire"
+                  description="Soyez le premier a reagir a ce chapitre."
+                />
               )}
             </div>
 
@@ -225,7 +231,7 @@ export function StoryDetailPage() {
                 <button
                   type="submit"
                   disabled={postingComment || !selectedChapter}
-                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-slate-300"
+                  className="rounded-lg bg-cyan-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-slate-300"
                 >
                   {postingComment ? 'Publication...' : 'Ajouter un commentaire'}
                 </button>
@@ -240,15 +246,21 @@ export function StoryDetailPage() {
             )}
           </>
         ) : (
-          <p className="mt-3 text-sm text-slate-600">Aucun chapitre disponible pour cette story.</p>
+          <div className="mt-3">
+            <EmptyState
+              title="Aucun chapitre disponible"
+              description="L'auteur n'a pas encore publie de chapitre sur cette story."
+            />
+          </div>
         )}
       </section>
 
       {canAddChapter && (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm backdrop-blur">
           <h2 className="text-xl font-semibold text-slate-900">Ajouter un chapitre</h2>
 
-          {chapterError && <p className="mt-3 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{chapterError}</p>}
+          {chapterError && <div className="mt-3"><ErrorBanner message={chapterError} compact /></div>}
+          {addingChapter && <div className="mt-3"><LoadingState label="Publication du chapitre..." compact /></div>}
 
           <form
             className="mt-4 space-y-3"
@@ -309,7 +321,7 @@ export function StoryDetailPage() {
             <button
               type="submit"
               disabled={addingChapter}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="rounded-lg bg-cyan-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
               {addingChapter ? 'Publication...' : 'Ajouter le chapitre'}
             </button>

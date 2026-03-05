@@ -118,7 +118,7 @@ class StoryServiceIntegrationTests {
             () -> storyService.addChapter(author, story.getId(), new ChapterCreateRequest("Suite", false))
         );
 
-        assertEquals("Previous chapter is not unlocked.", ex.getMessage());
+        assertEquals("All previous chapters must be unlocked.", ex.getMessage());
     }
 
     @Test
