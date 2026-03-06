@@ -74,7 +74,10 @@ export function HomePage() {
         sx={{
           p: { xs: 2.5, md: 4 },
           borderRadius: 4,
-          background: 'linear-gradient(120deg, #ecfeff 0%, #f0f9ff 40%, #fffbeb 100%)',
+          background: (theme) =>
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(120deg, rgba(19,19,19,1) 0%, rgba(33,33,33,1) 45%, rgba(12,12,12,1) 100%)'
+              : 'linear-gradient(120deg, #ecfeff 0%, #f0f9ff 40%, #fffbeb 100%)',
         }}
       >
         <Typography variant="overline" color="primary" fontWeight={700}>

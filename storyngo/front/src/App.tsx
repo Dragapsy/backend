@@ -1,12 +1,15 @@
 import { BookOpenText } from 'lucide-react'
 import AddIcon from '@mui/icons-material/Add'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
+import DarkModeIcon from '@mui/icons-material/DarkMode'
 import DashboardCustomizeIcon from '@mui/icons-material/DashboardCustomize'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
+import LightModeIcon from '@mui/icons-material/LightMode'
 import LoginIcon from '@mui/icons-material/Login'
 import LogoutIcon from '@mui/icons-material/Logout'
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1'
 import { AppBar, Box, Button, Chip, Container, Toolbar, Typography } from '@mui/material'
+import type { PaletteMode } from '@mui/material/styles'
 import type { ReactElement } from 'react'
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useUser } from './context/UserContext'
@@ -76,7 +79,12 @@ function DashboardRedirect() {
   return <Navigate to="/dashboard/user" replace />
 }
 
-function App() {
+type AppProps = {
+  themeMode: PaletteMode
+  onToggleTheme: () => void
+}
+
+function App({ themeMode, onToggleTheme }: AppProps) {
   const { isAuthenticated, user, logout } = useUser()
 
   return (
@@ -124,6 +132,16 @@ function App() {
                 width: { xs: '100%', md: 'auto' },
               }}
             >
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={onToggleTheme}
+                startIcon={themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+                size="small"
+                sx={{ minWidth: { xs: 'calc(50% - 4px)', md: 0 } }}
+              >
+                {themeMode === 'dark' ? 'Light' : 'Dark'}
+              </Button>
               {isAuthenticated ? (
                 <>
                   <Chip label={`${user?.pseudo} • ${user?.role}`} color="primary" variant="outlined" sx={{ maxWidth: { xs: '100%', md: 'none' } }} />

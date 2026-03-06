@@ -321,7 +321,10 @@ export function StoryDetailPage() {
         sx={{
           p: { xs: 2.5, md: 3.4 },
           borderRadius: 4,
-          background: 'linear-gradient(120deg, #ecfeff 0%, #f0f9ff 40%, #fffbeb 100%)',
+          background: (theme) =>
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(120deg, rgba(19,19,19,1) 0%, rgba(33,33,33,1) 45%, rgba(12,12,12,1) 100%)'
+              : 'linear-gradient(120deg, #ecfeff 0%, #f0f9ff 40%, #fffbeb 100%)',
         }}
       >
         <Box sx={{ display: 'grid', gap: 2.6, gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' } }}>
@@ -442,8 +445,18 @@ export function StoryDetailPage() {
                       variant="outlined"
                       sx={{
                         p: 1.4,
-                        backgroundColor: isCurrent ? '#ecfeff' : isCompleted ? '#ecfdf5' : '#f8fafc',
-                        borderColor: isCurrent ? '#67e8f9' : isCompleted ? '#86efac' : '#e2e8f0',
+                        backgroundColor: (theme) => {
+                          if (theme.palette.mode === 'dark') {
+                            return isCurrent ? 'rgba(6,182,212,0.18)' : isCompleted ? 'rgba(34,197,94,0.18)' : theme.palette.background.paper
+                          }
+                          return isCurrent ? '#ecfeff' : isCompleted ? '#ecfdf5' : '#f8fafc'
+                        },
+                        borderColor: (theme) => {
+                          if (theme.palette.mode === 'dark') {
+                            return isCurrent ? 'rgba(103,232,249,0.8)' : isCompleted ? 'rgba(134,239,172,0.8)' : theme.palette.divider
+                          }
+                          return isCurrent ? '#67e8f9' : isCompleted ? '#86efac' : '#e2e8f0'
+                        },
                       }}
                     >
                       <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
@@ -533,7 +546,16 @@ export function StoryDetailPage() {
                 </Typography>
 
                 <Box sx={{ mt: 1.6, display: 'grid', gap: 1.2, gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' } }}>
-                  <Paper variant="outlined" sx={{ p: 1.4, background: 'linear-gradient(120deg, #ecfeff 0%, #ffffff 100%)' }}>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 1.4,
+                      background: (theme) =>
+                        theme.palette.mode === 'dark'
+                          ? 'linear-gradient(120deg, rgba(6,182,212,0.16) 0%, rgba(19,19,19,1) 100%)'
+                          : 'linear-gradient(120deg, #ecfeff 0%, #ffffff 100%)',
+                    }}
+                  >
                     <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
                       RICHESSE DU CONTENU
                     </Typography>
@@ -545,7 +567,16 @@ export function StoryDetailPage() {
                     </Typography>
                   </Paper>
 
-                  <Paper variant="outlined" sx={{ p: 1.4, background: 'linear-gradient(120deg, #ecfdf5 0%, #ffffff 100%)' }}>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 1.4,
+                      background: (theme) =>
+                        theme.palette.mode === 'dark'
+                          ? 'linear-gradient(120deg, rgba(34,197,94,0.16) 0%, rgba(19,19,19,1) 100%)'
+                          : 'linear-gradient(120deg, #ecfdf5 0%, #ffffff 100%)',
+                    }}
+                  >
                     <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
                       MATURITE DE PUBLICATION
                     </Typography>
@@ -557,7 +588,16 @@ export function StoryDetailPage() {
                     </Typography>
                   </Paper>
 
-                  <Paper variant="outlined" sx={{ p: 1.4, background: 'linear-gradient(120deg, #f5f3ff 0%, #ffffff 100%)' }}>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 1.4,
+                      background: (theme) =>
+                        theme.palette.mode === 'dark'
+                          ? 'linear-gradient(120deg, rgba(139,92,246,0.16) 0%, rgba(19,19,19,1) 100%)'
+                          : 'linear-gradient(120deg, #f5f3ff 0%, #ffffff 100%)',
+                    }}
+                  >
                     <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
                       ENGAGEMENT DES LECTEURS
                     </Typography>
@@ -617,7 +657,14 @@ export function StoryDetailPage() {
 
             <Stack spacing={1.2} sx={{ mt: 2 }}>
               {comments.map((comment) => (
-                <Paper key={comment.id} variant="outlined" sx={{ p: 1.5, backgroundColor: '#f8fafc' }}>
+                <Paper
+                  key={comment.id}
+                  variant="outlined"
+                  sx={{
+                    p: 1.5,
+                    backgroundColor: (theme) => (theme.palette.mode === 'dark' ? theme.palette.background.paper : '#f8fafc'),
+                  }}
+                >
                   <Typography variant="body2">{comment.content}</Typography>
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 0.8, display: 'block' }}>
                     {comment.authorName} - {new Date(comment.createdAt).toLocaleString()}

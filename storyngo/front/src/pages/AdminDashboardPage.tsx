@@ -124,7 +124,10 @@ export function AdminDashboardPage() {
         sx={{
           p: { xs: 2.5, md: 4 },
           borderRadius: 4,
-          background: 'linear-gradient(120deg, #fff7ed 0%, #fef2f2 45%, #f8fafc 100%)',
+          background: (theme) =>
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(120deg, rgba(26,18,18,1) 0%, rgba(32,18,18,1) 45%, rgba(12,12,12,1) 100%)'
+              : 'linear-gradient(120deg, #fff7ed 0%, #fef2f2 45%, #f8fafc 100%)',
         }}
       >
         <Typography variant="overline" color="error" fontWeight={700}>
