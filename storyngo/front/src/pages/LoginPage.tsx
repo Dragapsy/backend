@@ -17,9 +17,16 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const isFormReady = email.trim().length > 0 && password.length >= 8
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    if (!isFormReady) {
+      setError('Entrez un email valide et un mot de passe de 8 caracteres minimum.')
+      return
+    }
+
     setLoading(true)
     setError(null)
 
@@ -41,7 +48,7 @@ export function LoginPage() {
       </Typography>
 
       {error && <Box sx={{ mt: 2 }}><ErrorBanner message={error} compact /></Box>}
-      {loading && <Box sx={{ mt: 2 }}><LoadingState label="Connexion en cours..." compact /></Box>}
+      {loading && <Box sx={{ mt: 2 }}><LoadingState label="Connexion en cours..." description="Validation des identifiants" compact /></Box>}
 
       <Stack component="form" spacing={2} sx={{ mt: 3 }} onSubmit={handleSubmit}>
         <TextField
@@ -65,7 +72,7 @@ export function LoginPage() {
           fullWidth
         />
 
-        <Button type="submit" disabled={loading} variant="contained" size="large" fullWidth>
+        <Button type="submit" disabled={loading || !isFormReady} variant="contained" size="large" fullWidth>
           {loading ? 'Connexion...' : 'Se connecter'}
         </Button>
       </Stack>

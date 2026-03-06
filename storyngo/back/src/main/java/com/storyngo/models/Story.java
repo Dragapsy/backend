@@ -3,6 +3,8 @@ package com.storyngo.models;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -40,6 +42,11 @@ public class Story {
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private StoryStatus status = StoryStatus.DRAFT;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "author_id", nullable = false)

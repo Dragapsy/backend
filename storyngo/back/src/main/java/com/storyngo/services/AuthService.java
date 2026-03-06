@@ -7,6 +7,7 @@ import com.storyngo.exceptions.ConflictException;
 import com.storyngo.exceptions.UnauthorizedException;
 import com.storyngo.mappers.UserMapper;
 import com.storyngo.models.User;
+import com.storyngo.models.UserRole;
 import com.storyngo.repositories.UserRepository;
 import com.storyngo.security.JwtUtils;
 import java.time.LocalDateTime;
@@ -39,6 +40,9 @@ public class AuthService {
         User user = userMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(request.password()));
         user.setCreatedAt(LocalDateTime.now());
+        if (user.getRole() == null) {
+            user.setRole(UserRole.USER);
+        }
 
         User saved = userRepository.save(user);
         return userMapper.toAuthResponse(saved, jwtUtils.generateToken(saved));

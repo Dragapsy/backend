@@ -11,6 +11,7 @@ public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "role", ignore = true)
     User toUser(RegisterRequest request);
 
     @Mapping(target = "token", source = "token")

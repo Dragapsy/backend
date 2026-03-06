@@ -1,13 +1,79 @@
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import {
+  Box,
+  Button,
+  Checkbox,
+  Chip,
+  Collapse,
+  FormControl,
+  FormControlLabel,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link as RouterLink, useParams } from 'react-router-dom'
 import { getApiErrorMessage } from '../api/apiClient'
-import { addChapter, addComment, getComments, getStoryDetails, voteChapter } from '../api/storyApi'
+import {
+  addChapter,
+  addComment,
+  approveStoryReview,
+  archiveStory,
+  getComments,
+  getStoryDetails,
+  getStoryQualityScore,
+  rejectStoryReview,
+  submitStoryForReview,
+  voteChapter,
+} from '../api/storyApi'
 import { ChapterCard } from '../components/ChapterCard'
 import { EmptyState } from '../components/EmptyState'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { LoadingState } from '../components/LoadingState'
+import { SectionTitle } from '../components/SectionTitle'
 import { useUser } from '../context/UserContext'
-import type { CommentDTO, StoryDetailsDTO } from '../types'
+import type { CommentDTO, StoryDetailsDTO, StoryQualityScoreDTO, StoryStatus } from '../types'
+
+const workflowSteps: StoryStatus[] = ['DRAFT', 'IN_REVIEW', 'PUBLISHED', 'ARCHIVED']
+
+const statusLabel: Record<StoryStatus, string> = {
+  DRAFT: 'Brouillon',
+  IN_REVIEW: 'En validation',
+  PUBLISHED: 'Publiee',
+  ARCHIVED: 'Archivee',
+}
+
+const statusDescription: Record<StoryStatus, string> = {
+  DRAFT: 'L’auteur peut encore modifier et ajouter des chapitres.',
+  IN_REVIEW: 'La story attend la decision d’un reviewer ou admin.',
+  PUBLISHED: 'La story est visible comme version publiee.',
+  ARCHIVED: 'La story est fermee en consultation uniquement.',
+}
+
+const statusTone: Record<StoryStatus, 'default' | 'warning' | 'success'> = {
+  DRAFT: 'default',
+  IN_REVIEW: 'warning',
+  PUBLISHED: 'success',
+  ARCHIVED: 'default',
+}
+
+function getQualityMention(score: number) {
+  if (score >= 80) {
+    return 'Excellent niveau'
+  }
+  if (score >= 60) {
+    return 'Bon niveau'
+  }
+  if (score >= 40) {
+    return 'Niveau moyen'
+  }
+  return 'Niveau a renforcer'
+}
 
 export function StoryDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -22,9 +88,15 @@ export function StoryDetailPage() {
   const [chapterAnonymous, setChapterAnonymous] = useState(false)
   const [addingChapter, setAddingChapter] = useState(false)
   const [chapterError, setChapterError] = useState<string | null>(null)
+  const [qualityScore, setQualityScore] = useState<StoryQualityScoreDTO | null>(null)
+  const [qualityError, setQualityError] = useState<string | null>(null)
+  const [loadingQuality, setLoadingQuality] = useState(false)
+  const [workflowBusy, setWorkflowBusy] = useState<'submit' | 'approve' | 'reject' | 'archive' | null>(null)
+  const [workflowError, setWorkflowError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [votingId, setVotingId] = useState<number | null>(null)
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const { isAuthenticated, user } = useUser()
 
   const selectedChapter = useMemo(
@@ -35,6 +107,36 @@ export function StoryDetailPage() {
   const canAddChapter = Boolean(
     isAuthenticated && storyDetails?.story.authorName && user?.pseudo === storyDetails.story.authorName,
   )
+
+  const currentStatus = storyDetails?.story.status
+
+  const isAuthor = Boolean(
+    isAuthenticated && storyDetails?.story.authorName && user?.pseudo === storyDetails.story.authorName,
+  )
+
+  const currentStepIndex = useMemo(() => {
+    if (!currentStatus) {
+      return 0
+    }
+    return Math.max(0, workflowSteps.indexOf(currentStatus))
+  }, [currentStatus])
+
+  const canSubmitReview = Boolean(isAuthor && currentStatus === 'DRAFT')
+  const canReviewStory = Boolean(isAuthenticated && !isAuthor && currentStatus === 'IN_REVIEW')
+  const canArchiveStory = Boolean(isAuthenticated && currentStatus === 'PUBLISHED')
+
+  async function refreshQualityScore(storyId: number) {
+    setLoadingQuality(true)
+    setQualityError(null)
+    try {
+      const score = await getStoryQualityScore(storyId)
+      setQualityScore(score)
+    } catch (err) {
+      setQualityError(getApiErrorMessage(err, 'Score qualite indisponible pour le moment.'))
+    } finally {
+      setLoadingQuality(false)
+    }
+  }
 
   async function loadComments(chapterId: number) {
     setLoadingComments(true)
@@ -62,8 +164,10 @@ export function StoryDetailPage() {
       setError(null)
 
       try {
-        const details = await getStoryDetails(Number(id))
+        const storyId = Number(id)
+        const details = await getStoryDetails(storyId)
         setStoryDetails(details)
+        void refreshQualityScore(storyId)
         if (details.chapters.length > 0) {
           const firstChapterId = details.chapters[0].id
           setSelectedChapterId(firstChapterId)
@@ -104,10 +208,46 @@ export function StoryDetailPage() {
             : chapter,
         ),
       })
+      void refreshQualityScore(storyDetails.story.id)
     } catch {
       setError('Vote impossible pour ce chapitre.')
     } finally {
       setVotingId(null)
+    }
+  }
+
+  async function handleWorkflowAction(action: 'submit' | 'approve' | 'reject' | 'archive') {
+    if (!storyDetails) {
+      return
+    }
+
+    setWorkflowBusy(action)
+    setWorkflowError(null)
+    try {
+      const updatedStory =
+        action === 'submit'
+          ? await submitStoryForReview(storyDetails.story.id)
+          : action === 'approve'
+            ? await approveStoryReview(storyDetails.story.id)
+            : action === 'reject'
+              ? await rejectStoryReview(storyDetails.story.id)
+              : await archiveStory(storyDetails.story.id)
+
+      setStoryDetails((prev) => {
+        if (!prev) {
+          return prev
+        }
+        return {
+          ...prev,
+          story: updatedStory,
+        }
+      })
+
+      void refreshQualityScore(storyDetails.story.id)
+    } catch (err) {
+      setWorkflowError(getApiErrorMessage(err, 'Action workflow impossible.'))
+    } finally {
+      setWorkflowBusy(null)
     }
   }
 
@@ -117,31 +257,250 @@ export function StoryDetailPage() {
 
   if (error || !storyDetails) {
     return (
-      <div className="space-y-4">
+      <Stack spacing={2}>
         <ErrorBanner message={error ?? 'Story introuvable.'} />
-        <Link to="/" className="text-sm font-semibold text-slate-700 underline">
+        <Button component={RouterLink} to="/" variant="text" sx={{ width: 'fit-content' }}>
           Retour au dashboard
-        </Link>
-      </div>
+        </Button>
+      </Stack>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <Link to="/" className="text-sm font-semibold text-slate-700 underline">
+    <Box sx={{ display: 'grid', gap: 3.2 }}>
+      <Button component={RouterLink} to="/" variant="text" sx={{ width: 'fit-content', px: 0.5 }}>
         Retour au dashboard
-      </Link>
+      </Button>
 
-      <header className="rounded-3xl border border-slate-200/80 bg-white/90 p-6 shadow-sm backdrop-blur md:p-7">
-        <p className="text-xs uppercase tracking-wide text-slate-500">Story #{storyDetails.story.id}</p>
-        <h1 className="mt-2 text-3xl font-semibold text-slate-900">{storyDetails.story.title}</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-700">{storyDetails.story.summary}</p>
-        <p className="mt-3 text-xs text-slate-500">Auteur principal: {storyDetails.story.authorName}</p>
-      </header>
+      <Paper
+        variant="outlined"
+        sx={{
+          p: { xs: 2.5, md: 3.4 },
+          borderRadius: 4,
+          background: 'linear-gradient(120deg, #ecfeff 0%, #f0f9ff 40%, #fffbeb 100%)',
+        }}
+      >
+        <Box sx={{ display: 'grid', gap: 2.6, gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' } }}>
+          <Box>
+            <Typography variant="overline" color="text.secondary">
+              Story #{storyDetails.story.id}
+            </Typography>
+            <Typography variant="h4" sx={{ mt: 0.8 }}>
+              {storyDetails.story.title}
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mt: 1.4, maxWidth: 820 }}>
+              {storyDetails.story.summary}
+            </Typography>
+
+            <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 2.1 }}>
+              <Chip label={statusLabel[storyDetails.story.status]} color={statusTone[storyDetails.story.status]} variant="outlined" />
+              <Chip label={`${storyDetails.chapters.length} chapitre(s)`} variant="outlined" />
+            </Stack>
+
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1.8 }}>
+              Auteur principal: {storyDetails.story.authorName}
+            </Typography>
+          </Box>
+
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Typography variant="overline" color="text.secondary">
+              Etat de la story
+            </Typography>
+            {loadingQuality ? (
+              <Box sx={{ mt: 1.5 }}>
+                <LoadingState label="Mise a jour des informations..." compact />
+              </Box>
+            ) : qualityError ? (
+              <Box sx={{ mt: 1.5 }}>
+                <ErrorBanner message={qualityError} compact />
+              </Box>
+            ) : qualityScore ? (
+              <>
+                <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                  {statusLabel[storyDetails.story.status]}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  {statusDescription[storyDetails.story.status]}
+                </Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 1.4 }}>
+                  <Chip size="small" label={`${qualityScore.chapterCount} chapitre(s)`} color="primary" variant="outlined" />
+                  <Chip size="small" label={`${qualityScore.voteCount} vote(s)`} color="success" variant="outlined" />
+                  <Chip size="small" label={`${qualityScore.commentCount} commentaire(s)`} color="secondary" variant="outlined" />
+                </Stack>
+              </>
+            ) : null}
+          </Paper>
+        </Box>
+      </Paper>
+
+      <Paper variant="outlined" sx={{ p: 2.2 }}>
+        <Button
+          variant="text"
+          color="secondary"
+          endIcon={showAdvanced ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          onClick={() => setShowAdvanced((prev) => !prev)}
+          sx={{ justifyContent: 'space-between', width: '100%', px: 1 }}
+        >
+          {showAdvanced ? 'Masquer les details avances' : 'Afficher les details avances'}
+        </Button>
+        <Typography variant="body2" color="text.secondary" sx={{ px: 1, mt: 0.5 }}>
+          Mode optionnel pour moderation, publication et score interne.
+        </Typography>
+
+        <Collapse in={showAdvanced} timeout="auto" unmountOnExit>
+          <Stack spacing={2} sx={{ mt: 2 }}>
+            <Paper variant="outlined" sx={{ p: 2 }}>
+              <Typography variant="h6">Moderation et publication</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.6 }}>
+                Cette frise indique ou en est la story dans son cycle de publication.
+              </Typography>
+
+              <Box sx={{ mt: 1.6, display: 'grid', gap: 1, gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' } }}>
+                {workflowSteps.map((step, index) => {
+                  const isCurrent = index === currentStepIndex
+                  const isCompleted = index < currentStepIndex
+                  return (
+                    <Paper
+                      key={step}
+                      variant="outlined"
+                      sx={{
+                        p: 1.4,
+                        backgroundColor: isCurrent ? '#ecfeff' : isCompleted ? '#ecfdf5' : '#f8fafc',
+                        borderColor: isCurrent ? '#67e8f9' : isCompleted ? '#86efac' : '#e2e8f0',
+                      }}
+                    >
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+                        ETAPE {index + 1}
+                      </Typography>
+                      <Typography variant="subtitle2" sx={{ mt: 0.35 }}>
+                        {statusLabel[step]}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.4, display: 'block', lineHeight: 1.45 }}>
+                        {statusDescription[step]}
+                      </Typography>
+                    </Paper>
+                  )
+                })}
+              </Box>
+
+              {workflowError && (
+                <Box sx={{ mt: 2 }}>
+                  <ErrorBanner message={workflowError} compact />
+                </Box>
+              )}
+
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 2 }}>
+                {canSubmitReview && (
+                  <Button
+                    variant="contained"
+                    disabled={workflowBusy !== null}
+                    onClick={() => {
+                      void handleWorkflowAction('submit')
+                    }}
+                  >
+                    {workflowBusy === 'submit' ? 'Soumission...' : 'Envoyer en validation'}
+                  </Button>
+                )}
+
+                {canReviewStory && (
+                  <>
+                    <Button
+                      variant="contained"
+                      color="success"
+                      disabled={workflowBusy !== null}
+                      onClick={() => {
+                        void handleWorkflowAction('approve')
+                      }}
+                    >
+                      {workflowBusy === 'approve' ? 'Validation...' : 'Valider la story'}
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="warning"
+                      disabled={workflowBusy !== null}
+                      onClick={() => {
+                        void handleWorkflowAction('reject')
+                      }}
+                    >
+                      {workflowBusy === 'reject' ? 'Rejet...' : 'Demander des corrections'}
+                    </Button>
+                  </>
+                )}
+
+                {canArchiveStory && (
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    disabled={workflowBusy !== null}
+                    onClick={() => {
+                      void handleWorkflowAction('archive')
+                    }}
+                  >
+                    {workflowBusy === 'archive' ? 'Archivage...' : 'Archiver'}
+                  </Button>
+                )}
+              </Stack>
+
+              {!isAuthenticated && (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                  Connectez-vous pour interagir avec le workflow.
+                </Typography>
+              )}
+            </Paper>
+
+            {qualityScore && (
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                <Typography variant="h6">Indicateurs de qualite</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.6 }}>
+                  Score interne: {qualityScore.totalScore}/100 - {getQualityMention(qualityScore.totalScore)}
+                </Typography>
+
+                <Box sx={{ mt: 1.6, display: 'grid', gap: 1.2, gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' } }}>
+                  <Paper variant="outlined" sx={{ p: 1.4, background: 'linear-gradient(120deg, #ecfeff 0%, #ffffff 100%)' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+                      RICHESSE DU CONTENU
+                    </Typography>
+                    <Typography variant="h6" sx={{ mt: 0.5 }}>
+                      {qualityScore.completenessScore}/40
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Progression et densite de la story.
+                    </Typography>
+                  </Paper>
+
+                  <Paper variant="outlined" sx={{ p: 1.4, background: 'linear-gradient(120deg, #ecfdf5 0%, #ffffff 100%)' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+                      MATURITE DE PUBLICATION
+                    </Typography>
+                    <Typography variant="h6" sx={{ mt: 0.5 }}>
+                      {qualityScore.statusScore}/25
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Depend du statut actuel de la story.
+                    </Typography>
+                  </Paper>
+
+                  <Paper variant="outlined" sx={{ p: 1.4, background: 'linear-gradient(120deg, #f5f3ff 0%, #ffffff 100%)' }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+                      ENGAGEMENT DES LECTEURS
+                    </Typography>
+                    <Typography variant="h6" sx={{ mt: 0.5 }}>
+                      {qualityScore.engagementScore}/35
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      S'appuie sur votes et commentaires.
+                    </Typography>
+                  </Paper>
+                </Box>
+              </Paper>
+            )}
+          </Stack>
+        </Collapse>
+      </Paper>
 
       <section>
-        <h2 className="mb-4 text-xl font-semibold text-slate-900">Lecture des chapitres</h2>
-        <div className="space-y-4">
+        <SectionTitle title="Lecture des chapitres" subtitle="Suivez les chapitres deja publies et votez pour la suite." />
+        <Stack spacing={2}>
           {storyDetails.chapters.map((chapter) => (
             <ChapterCard
               key={chapter.id}
@@ -151,41 +510,42 @@ export function StoryDetailPage() {
               disabled={!isAuthenticated}
             />
           ))}
-        </div>
+        </Stack>
       </section>
 
-      <section className="rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm backdrop-blur">
-        <h2 className="text-xl font-semibold text-slate-900">Commentaires</h2>
+      <Paper variant="outlined" sx={{ p: { xs: 2, sm: 2.5 } }}>
+        <Typography variant="h5">Commentaires</Typography>
         {storyDetails.chapters.length > 0 ? (
           <>
-            <label className="mt-3 block">
-              <span className="text-sm font-medium text-slate-700">Choisir un chapitre</span>
-              <select
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            <FormControl fullWidth sx={{ mt: 2 }} size="small">
+              <InputLabel id="chapter-select-label">Choisir un chapitre</InputLabel>
+              <Select
+                labelId="chapter-select-label"
                 value={selectedChapterId ?? ''}
+                label="Choisir un chapitre"
                 onChange={(event) => {
                   void handleChapterSelection(Number(event.target.value))
                 }}
               >
                 {storyDetails.chapters.map((chapter) => (
-                  <option key={chapter.id} value={chapter.id}>
+                  <MenuItem key={chapter.id} value={chapter.id}>
                     Chapitre {chapter.orderIndex}
-                  </option>
+                  </MenuItem>
                 ))}
-              </select>
-            </label>
+              </Select>
+            </FormControl>
 
-            {loadingComments && <div className="mt-3"><LoadingState label="Chargement des commentaires..." compact /></div>}
-            {commentsError && <div className="mt-3"><ErrorBanner message={commentsError} compact /></div>}
+            {loadingComments && <Box sx={{ mt: 2 }}><LoadingState label="Chargement des commentaires..." compact /></Box>}
+            {commentsError && <Box sx={{ mt: 2 }}><ErrorBanner message={commentsError} compact /></Box>}
 
-            <div className="mt-4 space-y-3">
+            <Stack spacing={1.2} sx={{ mt: 2 }}>
               {comments.map((comment) => (
-                <article key={comment.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-sm text-slate-800">{comment.content}</p>
-                  <p className="mt-2 text-xs text-slate-500">
+                <Paper key={comment.id} variant="outlined" sx={{ p: 1.5, backgroundColor: '#f8fafc' }}>
+                  <Typography variant="body2">{comment.content}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.8, display: 'block' }}>
                     {comment.authorName} - {new Date(comment.createdAt).toLocaleString()}
-                  </p>
-                </article>
+                  </Typography>
+                </Paper>
               ))}
               {!loadingComments && comments.length === 0 && (
                 <EmptyState
@@ -193,11 +553,13 @@ export function StoryDetailPage() {
                   description="Soyez le premier a reagir a ce chapitre."
                 />
               )}
-            </div>
+            </Stack>
 
             {isAuthenticated ? (
-              <form
-                className="mt-4 space-y-3"
+              <Stack
+                component="form"
+                spacing={1.5}
+                sx={{ mt: 2 }}
                 onSubmit={(event) => {
                   event.preventDefault()
                   if (!selectedChapter) {
@@ -211,6 +573,7 @@ export function StoryDetailPage() {
                       const created = await addComment(selectedChapter.id, { content: commentContent })
                       setComments((prev) => [created, ...prev])
                       setCommentContent('')
+                      void refreshQualityScore(storyDetails.story.id)
                     } catch (err) {
                       setCommentsError(getApiErrorMessage(err, 'Ajout du commentaire impossible.'))
                     } finally {
@@ -219,51 +582,52 @@ export function StoryDetailPage() {
                   })()
                 }}
               >
-                <textarea
+                <TextField
                   required
-                  maxLength={1000}
+                  multiline
                   rows={3}
+                  inputProps={{ maxLength: 1000 }}
                   value={commentContent}
                   onChange={(event) => setCommentContent(event.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                   placeholder="Partagez votre reaction..."
                 />
-                <button
+                <Button
                   type="submit"
                   disabled={postingComment || !selectedChapter}
-                  className="rounded-lg bg-cyan-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+                  variant="contained"
+                  sx={{ width: { xs: '100%', sm: 'fit-content' } }}
                 >
                   {postingComment ? 'Publication...' : 'Ajouter un commentaire'}
-                </button>
-              </form>
+                </Button>
+              </Stack>
             ) : (
-              <p className="mt-4 text-sm text-slate-600">
-                <Link to="/login" className="font-semibold text-emerald-700 underline">
-                  Connectez-vous
-                </Link>{' '}
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                Connectez-vous
                 pour commenter.
-              </p>
+              </Typography>
             )}
           </>
         ) : (
-          <div className="mt-3">
+          <Box sx={{ mt: 2 }}>
             <EmptyState
               title="Aucun chapitre disponible"
               description="L'auteur n'a pas encore publie de chapitre sur cette story."
             />
-          </div>
+          </Box>
         )}
-      </section>
+      </Paper>
 
-      {canAddChapter && (
-        <section className="rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm backdrop-blur">
-          <h2 className="text-xl font-semibold text-slate-900">Ajouter un chapitre</h2>
+      {canAddChapter && currentStatus === 'DRAFT' && (
+        <Paper variant="outlined" sx={{ p: { xs: 2, sm: 2.5 } }}>
+          <Typography variant="h5">Ajouter un chapitre</Typography>
 
-          {chapterError && <div className="mt-3"><ErrorBanner message={chapterError} compact /></div>}
-          {addingChapter && <div className="mt-3"><LoadingState label="Publication du chapitre..." compact /></div>}
+          {chapterError && <Box sx={{ mt: 2 }}><ErrorBanner message={chapterError} compact /></Box>}
+          {addingChapter && <Box sx={{ mt: 2 }}><LoadingState label="Publication du chapitre..." compact /></Box>}
 
-          <form
-            className="mt-4 space-y-3"
+          <Stack
+            component="form"
+            spacing={1.5}
+            sx={{ mt: 2 }}
             onSubmit={(event) => {
               event.preventDefault()
               if (!storyDetails) {
@@ -288,6 +652,7 @@ export function StoryDetailPage() {
                       chapters: [...prev.chapters, created],
                     }
                   })
+                  void refreshQualityScore(storyDetails.story.id)
                   setChapterContent('')
                   setChapterAnonymous(false)
                 } catch (err) {
@@ -298,36 +663,32 @@ export function StoryDetailPage() {
               })()
             }}
           >
-            <textarea
+            <TextField
               required
-              maxLength={10000}
+              multiline
               rows={8}
+              inputProps={{ maxLength: 10000 }}
               value={chapterContent}
               onChange={(event) => setChapterContent(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
               placeholder="Ecrivez le prochain chapitre..."
             />
 
-            <label className="flex items-center gap-2 text-sm text-slate-700">
-              <input
-                type="checkbox"
-                checked={chapterAnonymous}
-                onChange={(event) => setChapterAnonymous(event.target.checked)}
-                className="h-4 w-4"
-              />
-              Publier anonymement ce chapitre
-            </label>
+            <FormControlLabel
+              control={<Checkbox checked={chapterAnonymous} onChange={(event) => setChapterAnonymous(event.target.checked)} />}
+              label="Publier anonymement ce chapitre"
+            />
 
-            <button
+            <Button
               type="submit"
               disabled={addingChapter}
-              className="rounded-lg bg-cyan-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+              variant="contained"
+              sx={{ width: { xs: '100%', sm: 'fit-content' } }}
             >
               {addingChapter ? 'Publication...' : 'Ajouter le chapitre'}
-            </button>
-          </form>
-        </section>
+            </Button>
+          </Stack>
+        </Paper>
       )}
-    </div>
+    </Box>
   )
 }

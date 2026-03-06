@@ -8,10 +8,13 @@ import com.storyngo.dto.ChapterCreateRequest;
 import com.storyngo.dto.ChapterDTO;
 import com.storyngo.dto.StoryCreateRequest;
 import com.storyngo.dto.StoryDetailsDTO;
+import com.storyngo.dto.StoryQualityScoreDTO;
 import com.storyngo.exceptions.ConflictException;
 import com.storyngo.models.Chapter;
 import com.storyngo.models.Story;
+import com.storyngo.models.StoryStatus;
 import com.storyngo.models.User;
+import com.storyngo.models.UserRole;
 import com.storyngo.models.Vote;
 import com.storyngo.repositories.ChapterRepository;
 import com.storyngo.repositories.StoryRepository;
@@ -140,7 +143,7 @@ class StoryServiceIntegrationTests {
         Chapter previous = chapterRepository.save(Chapter.builder()
             .story(story)
             .content("Chapitre 1")
-            .orderIndex(2)
+            .orderIndex(1)
             .isAnonymous(false)
             .voteThreshold(10)
             .charLimit(3000)
@@ -159,9 +162,86 @@ class StoryServiceIntegrationTests {
 
         ChapterDTO created = storyService.addChapter(author, story.getId(), new ChapterCreateRequest("Nouveau chapitre", true));
 
-        assertEquals(3, created.orderIndex());
+        assertEquals(2, created.orderIndex());
         assertEquals(5, created.threshold());
         assertEquals(4000, created.charLimit());
         assertFalse(created.isUnlocked());
+    }
+
+    @Test
+    void workflow_fullCycle_submitApproveArchive_andScore() {
+        User author = userRepository.save(User.builder()
+            .pseudo("AuteurWF")
+            .email("auteur.wf@storyngo.dev")
+            .password("password")
+            .role(UserRole.USER)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        User reviewer = userRepository.save(User.builder()
+            .pseudo("ReviewerWF")
+            .email("reviewer.wf@storyngo.dev")
+            .password("password")
+            .role(UserRole.REVIEWER)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        StoryDetailsDTO created = storyService.createStory(
+            author,
+            new StoryCreateRequest("Story WF", "Resume WF", "Contenu initial", false)
+        );
+        Long storyId = created.story().id();
+
+        assertEquals(StoryStatus.DRAFT, storyRepository.findById(storyId).orElseThrow().getStatus());
+
+        storyService.submitStoryForReview(author, storyId);
+        assertEquals(StoryStatus.IN_REVIEW, storyRepository.findById(storyId).orElseThrow().getStatus());
+
+        storyService.approveStoryReview(reviewer, storyId);
+        assertEquals(StoryStatus.PUBLISHED, storyRepository.findById(storyId).orElseThrow().getStatus());
+
+        storyService.archiveStory(author, storyId);
+        assertEquals(StoryStatus.ARCHIVED, storyRepository.findById(storyId).orElseThrow().getStatus());
+
+        StoryQualityScoreDTO score = storyService.getStoryQualityScore(storyId);
+        assertEquals(storyId, score.storyId());
+        assertEquals(StoryStatus.ARCHIVED, score.status());
+        assertFalse(score.totalScore() < 0);
+    }
+
+    @Test
+    void workflow_rejectsChapterUpdateOutsideDraft() {
+        User author = userRepository.save(User.builder()
+            .pseudo("AuteurGuard")
+            .email("auteur.guard@storyngo.dev")
+            .password("password")
+            .role(UserRole.USER)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        Story story = storyRepository.save(Story.builder()
+            .title("Story Guard")
+            .summary("Resume")
+            .author(author)
+            .status(StoryStatus.IN_REVIEW)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        Chapter chapter = chapterRepository.save(Chapter.builder()
+            .story(story)
+            .content("Old")
+            .orderIndex(1)
+            .isAnonymous(false)
+            .voteThreshold(20)
+            .charLimit(2000)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        ConflictException ex = assertThrows(
+            ConflictException.class,
+            () -> storyService.updateChapter(author, chapter.getId(), new com.storyngo.dto.ChapterUpdateRequest("New", false))
+        );
+
+        assertEquals("Chapters can only be edited while story is in DRAFT status.", ex.getMessage());
     }
 }

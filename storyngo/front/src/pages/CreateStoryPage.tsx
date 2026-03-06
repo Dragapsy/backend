@@ -15,16 +15,28 @@ export function CreateStoryPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const trimmedTitle = title.trim()
+  const trimmedSummary = summary.trim()
+  const trimmedContent = content.trim()
+  const isFormReady =
+    trimmedTitle.length >= 3 && trimmedSummary.length > 0 && trimmedSummary.length <= 2000 && trimmedContent.length > 0
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    if (!isFormReady) {
+      setError('Completez correctement les champs requis avant publication.')
+      return
+    }
+
     setSubmitting(true)
     setError(null)
 
     try {
       const story = await createStory({
-        title,
-        summary,
-        content,
+        title: trimmedTitle,
+        summary: trimmedSummary,
+        content: trimmedContent,
         isAnonymous,
       })
       navigate(`/stories/${story.story.id}`)
@@ -41,6 +53,9 @@ export function CreateStoryPage() {
       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
         Publiez une nouvelle intrigue et lancez votre premiere vague de votes.
       </Typography>
+      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+        Le premier chapitre definit le ton: soyez clair sur le hook narratif et l'objectif.
+      </Typography>
 
       {error && <Box sx={{ mt: 2 }}><ErrorBanner message={error} compact /></Box>}
       {submitting && <Box sx={{ mt: 2 }}><LoadingState label="Publication de la story..." compact /></Box>}
@@ -53,6 +68,7 @@ export function CreateStoryPage() {
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           placeholder="Le Royaume Oublie"
+          helperText={`${title.length}/120 caracteres`}
           fullWidth
         />
 
@@ -65,6 +81,7 @@ export function CreateStoryPage() {
           value={summary}
           onChange={(event) => setSummary(event.target.value)}
           placeholder="De quoi parle votre histoire ?"
+          helperText={`${summary.length}/2000 caracteres`}
           fullWidth
         />
 
@@ -77,6 +94,7 @@ export function CreateStoryPage() {
           value={content}
           onChange={(event) => setContent(event.target.value)}
           placeholder="Commencez votre chapitre..."
+          helperText={`${content.length}/2000 caracteres`}
           fullWidth
         />
 
@@ -85,7 +103,13 @@ export function CreateStoryPage() {
           label="Publier anonymement"
         />
 
-        <Button type="submit" disabled={submitting} variant="contained" size="large" sx={{ width: 'fit-content' }}>
+        <Button
+          type="submit"
+          disabled={submitting || !isFormReady}
+          variant="contained"
+          size="large"
+          sx={{ width: 'fit-content' }}
+        >
           {submitting ? 'Publication...' : 'Publier la story'}
         </Button>
       </Stack>

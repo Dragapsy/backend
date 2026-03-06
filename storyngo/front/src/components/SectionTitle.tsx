@@ -7,9 +7,11 @@ interface SectionTitleProps {
 
 export function SectionTitle({ title, subtitle }: SectionTitleProps) {
   return (
-    <Stack spacing={0.5} sx={{ mb: 2 }}>
-      <Typography variant="h5">{title}</Typography>
-      <Typography variant="body2" color="text.secondary">
+    <Stack spacing={0.6} sx={{ mb: 2.2 }}>
+      <Typography variant="h5" sx={{ lineHeight: 1.15 }}>
+        {title}
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 620 }}>
         {subtitle}
       </Typography>
     </Stack>

@@ -10,6 +10,7 @@ import type {
   StoryCreateRequest,
   StoryDTO,
   StoryDetailsDTO,
+  StoryQualityScoreDTO,
   VoteResultDTO,
 } from '../types'
 
@@ -43,6 +44,11 @@ export async function getStoryDetails(storyId: number): Promise<StoryDetailsDTO>
   return response.data
 }
 
+export async function getStoryQualityScore(storyId: number): Promise<StoryQualityScoreDTO> {
+  const response = await apiClient.get<StoryQualityScoreDTO>(`/stories/${storyId}/quality-score`)
+  return response.data
+}
+
 export async function createStory(request: StoryCreateRequest): Promise<StoryDetailsDTO> {
   const response = await apiClient.post<StoryDetailsDTO>('/stories', request)
   return response.data
@@ -65,5 +71,25 @@ export async function addComment(chapterId: number, request: CommentCreateReques
 
 export async function voteChapter(chapterId: number): Promise<VoteResultDTO> {
   const response = await apiClient.post<VoteResultDTO>(`/chapters/${chapterId}/vote`)
+  return response.data
+}
+
+export async function submitStoryForReview(storyId: number): Promise<StoryDTO> {
+  const response = await apiClient.post<StoryDTO>(`/stories/${storyId}/submit-review`)
+  return response.data
+}
+
+export async function approveStoryReview(storyId: number): Promise<StoryDTO> {
+  const response = await apiClient.post<StoryDTO>(`/stories/${storyId}/approve-review`)
+  return response.data
+}
+
+export async function rejectStoryReview(storyId: number): Promise<StoryDTO> {
+  const response = await apiClient.post<StoryDTO>(`/stories/${storyId}/reject-review`)
+  return response.data
+}
+
+export async function archiveStory(storyId: number): Promise<StoryDTO> {
+  const response = await apiClient.post<StoryDTO>(`/stories/${storyId}/archive`)
   return response.data
 }

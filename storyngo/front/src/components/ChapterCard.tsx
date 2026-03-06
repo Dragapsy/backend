@@ -19,14 +19,23 @@ export function ChapterCard({ chapter, onVote, votingId, disabled = false }: Cha
   const remainingVotes = Math.max(0, chapter.threshold - chapter.voteCount)
 
   return (
-    <Card variant="outlined">
-      <CardContent>
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={2}>
+    <Card
+      sx={{
+        '& .MuiChip-root': {
+          transition: 'transform 150ms ease',
+        },
+        '&:hover .MuiChip-root': {
+          transform: 'translateX(2px)',
+        },
+      }}
+    >
+      <CardContent sx={{ p: { xs: 1.75, sm: 2.2 } }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'flex-start' }} gap={1.25}>
           <Stack spacing={0.5}>
-            <Typography variant="overline" color="text.secondary">
+            <Typography variant="overline" color="text.secondary" sx={{ lineHeight: 1 }}>
               Chapitre {chapter.orderIndex}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" fontWeight={600}>
               Auteur: {chapter.authorName}
             </Typography>
           </Stack>
@@ -38,13 +47,13 @@ export function ChapterCard({ chapter, onVote, votingId, disabled = false }: Cha
           />
         </Stack>
 
-        <Typography sx={{ mt: 2, whiteSpace: 'pre-wrap' }} variant="body2">
+        <Typography sx={{ mt: 2, whiteSpace: 'pre-wrap', transition: 'color 160ms ease' }} variant="body2">
           {truncateContent(chapter.content, chapter.charLimit || 320)}
         </Typography>
       </CardContent>
 
-      <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
-        <Typography variant="caption" color="text.secondary">
+      <CardActions sx={{ justifyContent: 'space-between', px: { xs: 1.75, sm: 2 }, pb: { xs: 1.75, sm: 2 }, gap: 1, flexWrap: 'wrap' }}>
+        <Typography variant="caption" color="text.secondary" fontWeight={600}>
           {chapter.unlocked
             ? 'Chapitre debloque'
             : `Encore ${remainingVotes} vote${remainingVotes > 1 ? 's' : ''} pour debloquer`}
@@ -55,6 +64,7 @@ export function ChapterCard({ chapter, onVote, votingId, disabled = false }: Cha
           disabled={disabled || votingId === chapter.id}
           variant="contained"
           size="small"
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
           {votingId === chapter.id ? 'Vote...' : 'Voter'}
         </Button>

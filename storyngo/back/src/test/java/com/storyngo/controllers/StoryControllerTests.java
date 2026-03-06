@@ -2,14 +2,18 @@ package com.storyngo.controllers;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.storyngo.models.Chapter;
+import com.storyngo.models.ChapterVersion;
 import com.storyngo.models.Story;
+import com.storyngo.models.StoryStatus;
 import com.storyngo.models.User;
+import com.storyngo.models.UserRole;
 import com.storyngo.security.JwtUtils;
 import com.storyngo.repositories.ChapterRepository;
 import com.storyngo.repositories.StoryRepository;
@@ -51,6 +55,9 @@ class StoryControllerTests {
 
     @Autowired
     private VoteRepository voteRepository;
+
+    @Autowired
+    private com.storyngo.repositories.ChapterVersionRepository chapterVersionRepository;
 
     @Autowired
     private JwtUtils jwtUtils;
@@ -155,11 +162,286 @@ class StoryControllerTests {
             .andExpect(jsonPath("$.story.title").value("Titre"));
     }
 
+    @Test
+    void submitReview_returns200_andUpdatesStatus() throws Exception {
+        User author = createUser("author-submit", "author-submit@test.dev");
+        Story story = storyRepository.save(Story.builder()
+            .title("Story Submit")
+            .summary("Resume")
+            .author(author)
+            .status(StoryStatus.DRAFT)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        mockMvc.perform(post("/api/stories/" + story.getId() + "/submit-review")
+                .header("Authorization", bearer(author)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("IN_REVIEW"));
+    }
+
+    @Test
+    void submitReview_returns409_whenStatusTransitionInvalid() throws Exception {
+        User author = createUser("author-submit-409", "author-submit-409@test.dev");
+        Story story = storyRepository.save(Story.builder()
+            .title("Story Publish")
+            .summary("Resume")
+            .author(author)
+            .status(StoryStatus.PUBLISHED)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        mockMvc.perform(post("/api/stories/" + story.getId() + "/submit-review")
+                .header("Authorization", bearer(author)))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.error").value("Story cannot be submitted for review from status PUBLISHED."));
+    }
+
+    @Test
+    void qualityScore_returns200_withComponents() throws Exception {
+        User author = createUser("author-score", "author-score@test.dev");
+        Story story = storyRepository.save(Story.builder()
+            .title("Story Score")
+            .summary("Resume")
+            .author(author)
+            .status(StoryStatus.PUBLISHED)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        chapterRepository.save(Chapter.builder()
+            .story(story)
+            .content("Chapitre 1")
+            .orderIndex(1)
+            .isAnonymous(false)
+            .voteThreshold(20)
+            .charLimit(2000)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        mockMvc.perform(get("/api/stories/" + story.getId() + "/quality-score"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.storyId").value(story.getId()))
+            .andExpect(jsonPath("$.totalScore").exists())
+            .andExpect(jsonPath("$.completenessScore").exists())
+            .andExpect(jsonPath("$.statusScore").exists())
+            .andExpect(jsonPath("$.engagementScore").exists());
+    }
+
+    @Test
+    void approveReview_returns200_whenReviewerAndInReview() throws Exception {
+        User author = createUser("author-approve", "author-approve@test.dev");
+        User reviewer = createUser("reviewer-approve", "reviewer-approve@test.dev", UserRole.REVIEWER);
+
+        Story story = storyRepository.save(Story.builder()
+            .title("Story Approve")
+            .summary("Resume")
+            .author(author)
+            .status(StoryStatus.IN_REVIEW)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        mockMvc.perform(post("/api/stories/" + story.getId() + "/approve-review")
+                .header("Authorization", bearer(reviewer)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("PUBLISHED"));
+    }
+
+    @Test
+    void rejectReview_returns200_whenReviewerAndInReview() throws Exception {
+        User author = createUser("author-reject", "author-reject@test.dev");
+        User reviewer = createUser("reviewer-reject", "reviewer-reject@test.dev", UserRole.REVIEWER);
+
+        Story story = storyRepository.save(Story.builder()
+            .title("Story Reject")
+            .summary("Resume")
+            .author(author)
+            .status(StoryStatus.IN_REVIEW)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        mockMvc.perform(post("/api/stories/" + story.getId() + "/reject-review")
+                .header("Authorization", bearer(reviewer)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("DRAFT"));
+    }
+
+    @Test
+    void archive_returns200_whenAuthorAndPublished() throws Exception {
+        User author = createUser("author-archive", "author-archive@test.dev");
+
+        Story story = storyRepository.save(Story.builder()
+            .title("Story Archive")
+            .summary("Resume")
+            .author(author)
+            .status(StoryStatus.PUBLISHED)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        mockMvc.perform(post("/api/stories/" + story.getId() + "/archive")
+                .header("Authorization", bearer(author)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("ARCHIVED"));
+    }
+
+    @Test
+    void approveReview_returns403_whenUserIsNotReviewer() throws Exception {
+        User author = createUser("author-approve-403", "author-approve-403@test.dev");
+        User normalUser = createUser("user-approve-403", "user-approve-403@test.dev");
+
+        Story story = storyRepository.save(Story.builder()
+            .title("Story Approve 403")
+            .summary("Resume")
+            .author(author)
+            .status(StoryStatus.IN_REVIEW)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        mockMvc.perform(post("/api/stories/" + story.getId() + "/approve-review")
+                .header("Authorization", bearer(normalUser)))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.error").value("Only reviewers can approve stories."));
+    }
+
+    @Test
+    void getChapterVersions_returns200_withHistory() throws Exception {
+        User author = createUser("author-version-list", "author-version-list@test.dev");
+        Story story = storyRepository.save(Story.builder()
+            .title("Story Versions")
+            .summary("Resume")
+            .author(author)
+            .status(StoryStatus.DRAFT)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        Chapter chapter = chapterRepository.save(Chapter.builder()
+            .story(story)
+            .content("Chapitre initial")
+            .orderIndex(1)
+            .isAnonymous(false)
+            .voteThreshold(20)
+            .charLimit(2000)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        chapterVersionRepository.save(ChapterVersion.builder()
+            .chapter(chapter)
+            .versionNumber(1)
+            .content("Chapitre initial")
+            .createdAt(LocalDateTime.now().minusMinutes(2))
+            .build());
+        chapterVersionRepository.save(ChapterVersion.builder()
+            .chapter(chapter)
+            .versionNumber(2)
+            .content("Chapitre revu")
+            .createdAt(LocalDateTime.now().minusMinutes(1))
+            .build());
+
+        mockMvc.perform(get("/api/chapters/" + chapter.getId() + "/versions"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].versionNumber").exists());
+    }
+
+    @Test
+    void restoreChapterVersion_returns200_whenAuthorAndDraft() throws Exception {
+        User author = createUser("author-version-restore", "author-version-restore@test.dev");
+        Story story = storyRepository.save(Story.builder()
+            .title("Story Restore")
+            .summary("Resume")
+            .author(author)
+            .status(StoryStatus.DRAFT)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        Chapter chapter = chapterRepository.save(Chapter.builder()
+            .story(story)
+            .content("Current")
+            .orderIndex(1)
+            .isAnonymous(false)
+            .voteThreshold(20)
+            .charLimit(2000)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        ChapterVersion version = chapterVersionRepository.save(ChapterVersion.builder()
+            .chapter(chapter)
+            .versionNumber(1)
+            .content("Old")
+            .createdAt(LocalDateTime.now().minusHours(1))
+            .build());
+
+        mockMvc.perform(post("/api/chapters/" + chapter.getId() + "/versions/" + version.getId() + "/restore")
+                .header("Authorization", bearer(author)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").value("Old"));
+    }
+
+    @Test
+    void updateChapter_returns200_whenAuthorAndDraft() throws Exception {
+        User author = createUser("author-edit-ok", "author-edit-ok@test.dev");
+        Story story = storyRepository.save(Story.builder()
+            .title("Story Edit")
+            .summary("Resume")
+            .author(author)
+            .status(StoryStatus.DRAFT)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        Chapter chapter = chapterRepository.save(Chapter.builder()
+            .story(story)
+            .content("Old content")
+            .orderIndex(1)
+            .isAnonymous(false)
+            .voteThreshold(20)
+            .charLimit(2000)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        mockMvc.perform(patch("/api/chapters/" + chapter.getId())
+                .header("Authorization", bearer(author))
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new ChapterPayload("New content", true))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").value("New content"));
+    }
+
+    @Test
+    void updateChapter_returns409_whenStoryNotDraft() throws Exception {
+        User author = createUser("author-edit-409", "author-edit-409@test.dev");
+        Story story = storyRepository.save(Story.builder()
+            .title("Story Edit 409")
+            .summary("Resume")
+            .author(author)
+            .status(StoryStatus.IN_REVIEW)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        Chapter chapter = chapterRepository.save(Chapter.builder()
+            .story(story)
+            .content("Old content")
+            .orderIndex(1)
+            .isAnonymous(false)
+            .voteThreshold(20)
+            .charLimit(2000)
+            .createdAt(LocalDateTime.now())
+            .build());
+
+        mockMvc.perform(patch("/api/chapters/" + chapter.getId())
+                .header("Authorization", bearer(author))
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new ChapterPayload("New content", false))))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.error").value("Chapters can only be edited while story is in DRAFT status."));
+    }
+
     private User createUser(String pseudo, String email) {
+        return createUser(pseudo, email, UserRole.USER);
+    }
+
+    private User createUser(String pseudo, String email, UserRole role) {
         return userRepository.save(User.builder()
             .pseudo(pseudo)
             .email(email)
             .password(passwordEncoder.encode("password123"))
+            .role(role)
             .createdAt(LocalDateTime.now())
             .build());
     }

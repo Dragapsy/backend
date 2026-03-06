@@ -40,35 +40,84 @@ function App() {
 
   return (
     <Box sx={{ minHeight: '100vh' }}>
-      <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: '1px solid #e2e8f0' }}>
+      <AppBar position="sticky" color="inherit" elevation={0}>
         <Container maxWidth="lg">
-          <Toolbar disableGutters sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+          <Toolbar
+            disableGutters
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: 1.25,
+              py: { xs: 1, sm: 0.75 },
+              flexDirection: { xs: 'column', md: 'row' },
+              alignItems: { xs: 'stretch', md: 'center' },
+            }}
+          >
             <Button
               component={Link}
               to="/"
               color="inherit"
-              sx={{ display: 'inline-flex', alignItems: 'center', gap: 1.2, px: 1 }}
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: { xs: 'center', md: 'flex-start' },
+                gap: 1.2,
+                px: 1,
+                borderRadius: 2,
+                minHeight: { xs: 42, md: 36 },
+              }}
             >
               <BookOpenText size={20} />
-              <Typography variant="h6" fontWeight={700}>
+              <Typography variant="h6" fontWeight={800} sx={{ fontSize: { xs: '1rem', sm: '1.15rem' } }}>
                 Storyn'Go Platform
               </Typography>
             </Button>
 
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                justifyContent: { xs: 'center', md: 'flex-end' },
+                gap: 1,
+                width: { xs: '100%', md: 'auto' },
+              }}
+            >
               {isAuthenticated ? (
                 <>
-                  <Chip label={user?.pseudo} color="primary" variant="outlined" />
-                  <Button component={Link} to="/stories/create" variant="contained" startIcon={<AddIcon />}>
+                  <Chip label={user?.pseudo} color="primary" variant="outlined" sx={{ maxWidth: { xs: '100%', md: 'none' } }} />
+                  <Button
+                    component={Link}
+                    to="/stories/create"
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    size="small"
+                    sx={{ minWidth: { xs: 'calc(50% - 4px)', md: 0 } }}
+                  >
                     Creer
                   </Button>
-                  <Button variant="outlined" color="secondary" onClick={logout} startIcon={<LogoutIcon />}>
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    onClick={logout}
+                    startIcon={<LogoutIcon />}
+                    size="small"
+                    sx={{ minWidth: { xs: 'calc(50% - 4px)', md: 0 } }}
+                  >
                     Logout
                   </Button>
                 </>
               ) : (
                 <>
-                  <Button component={Link} to="/login" variant="outlined" color="secondary" startIcon={<LoginIcon />}>
+                  <Button
+                    component={Link}
+                    to="/login"
+                    variant="outlined"
+                    color="secondary"
+                    startIcon={<LoginIcon />}
+                    size="small"
+                    sx={{ minWidth: { xs: 'calc(50% - 4px)', md: 0 } }}
+                  >
                     Login
                   </Button>
                   <Button
@@ -77,6 +126,8 @@ function App() {
                     variant="contained"
                     color="primary"
                     startIcon={<PersonAddAlt1Icon />}
+                    size="small"
+                    sx={{ minWidth: { xs: 'calc(50% - 4px)', md: 0 } }}
                   >
                     Register
                   </Button>

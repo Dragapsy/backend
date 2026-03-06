@@ -20,27 +20,27 @@ export function HomePage() {
 
   const { isAuthenticated } = useUser()
 
-  useEffect(() => {
-    async function loadDashboard() {
-      setLoading(true)
-      setError(null)
+  async function loadDashboard() {
+    setLoading(true)
+    setError(null)
 
-      try {
-        const [drops, trending, upcoming] = await Promise.all([
-          getStories(),
-          getTrendingStories(),
-          getUpcomingChapters(),
-        ])
-        setStories(drops)
-        setTrendingStories(trending)
-        setUpcomingChapters(upcoming)
-      } catch {
-        setError('Impossible de charger le dashboard pour le moment.')
-      } finally {
-        setLoading(false)
-      }
+    try {
+      const [drops, trending, upcoming] = await Promise.all([
+        getStories(),
+        getTrendingStories(),
+        getUpcomingChapters(),
+      ])
+      setStories(drops)
+      setTrendingStories(trending)
+      setUpcomingChapters(upcoming)
+    } catch {
+      setError('Impossible de charger le dashboard pour le moment.')
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     void loadDashboard()
   }, [])
 
@@ -93,8 +93,13 @@ export function HomePage() {
         )}
       </Paper>
 
-      {loading && <LoadingState label="Chargement du dashboard..." />}
-      {error && <ErrorBanner message={error} />}
+      {loading && (
+        <LoadingState
+          label="Chargement du dashboard..."
+          description="Recuperation des stories, tendances et chapitres a debloquer."
+        />
+      )}
+      {error && <ErrorBanner message={error} actionLabel="Reessayer" onAction={() => void loadDashboard()} />}
 
       <section>
         <SectionTitle title="Derniers Drops" subtitle="Stories recemment publiees" />
@@ -102,6 +107,8 @@ export function HomePage() {
           <EmptyState
             title="Aucune story recente"
             description="Les prochaines publications apparaitront ici des qu'elles seront en ligne."
+            actionLabel="Actualiser"
+            onAction={() => void loadDashboard()}
           />
         ) : (
           <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(3, 1fr)' } }}>
@@ -118,6 +125,8 @@ export function HomePage() {
           <EmptyState
             title="Pas encore de tendance"
             description="Aucune story ne domine actuellement. Revenez apres les prochains votes."
+            actionLabel="Actualiser"
+            onAction={() => void loadDashboard()}
           />
         ) : (
           <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(3, 1fr)' } }}>
@@ -137,6 +146,8 @@ export function HomePage() {
           <EmptyState
             title="Aucun chapitre en attente"
             description="Tous les chapitres disponibles sont deja debloques."
+            actionLabel="Rafraichir"
+            onAction={() => void loadDashboard()}
           />
         ) : (
           <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, 1fr)' } }}>

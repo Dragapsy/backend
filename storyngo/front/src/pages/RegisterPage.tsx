@@ -16,9 +16,21 @@ export function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const isPasswordMismatch = confirmPassword.length > 0 && password !== confirmPassword
+  const isFormReady =
+    pseudo.trim().length >= 3 && email.trim().length > 0 && password.length >= 8 && !isPasswordMismatch
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    if (!isFormReady) {
+      if (password !== confirmPassword) {
+        setError('Les mots de passe ne correspondent pas.')
+        return
+      }
+      setError('Completez correctement le formulaire pour continuer.')
+      return
+    }
 
     if (password !== confirmPassword) {
       setError('Les mots de passe ne correspondent pas.')
@@ -56,6 +68,7 @@ export function RegisterPage() {
           value={pseudo}
           onChange={(event) => setPseudo(event.target.value)}
           placeholder="DragonWriter"
+          helperText={`${pseudo.length}/30 caracteres`}
           fullWidth
         />
 
@@ -77,6 +90,7 @@ export function RegisterPage() {
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Minimum 8 caracteres"
+          helperText="Au moins 8 caracteres"
           fullWidth
         />
 
@@ -88,10 +102,12 @@ export function RegisterPage() {
           value={confirmPassword}
           onChange={(event) => setConfirmPassword(event.target.value)}
           placeholder="Retapez votre mot de passe"
+          error={isPasswordMismatch}
+          helperText={isPasswordMismatch ? 'Les mots de passe doivent etre identiques' : 'Repetez le mot de passe'}
           fullWidth
         />
 
-        <Button type="submit" disabled={loading} variant="contained" size="large" fullWidth>
+        <Button type="submit" disabled={loading || !isFormReady} variant="contained" size="large" fullWidth>
           {loading ? 'Inscription...' : 'Creer mon compte'}
         </Button>
       </Stack>

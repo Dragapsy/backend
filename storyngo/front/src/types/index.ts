@@ -1,9 +1,12 @@
+export type StoryStatus = 'DRAFT' | 'IN_REVIEW' | 'PUBLISHED' | 'ARCHIVED'
+
 export interface StoryDTO {
   id: number
   title: string
   summary: string
   authorName: string
   chapterCount: number
+  status: StoryStatus
 }
 
 export interface ChapterDTO {
@@ -20,6 +23,18 @@ export interface ChapterDTO {
 export interface StoryDetailsDTO {
   story: StoryDTO
   chapters: ChapterDTO[]
+}
+
+export interface StoryQualityScoreDTO {
+  storyId: number
+  status: StoryStatus
+  totalScore: number
+  completenessScore: number
+  statusScore: number
+  engagementScore: number
+  chapterCount: number
+  voteCount: number
+  commentCount: number
 }
 
 export interface CommentDTO {
