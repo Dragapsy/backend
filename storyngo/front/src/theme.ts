@@ -5,20 +5,20 @@ export const appTheme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#0e7490',
+      main: '#364e14',
       dark: '#155e75',
       light: '#67e8f9',
     },
     secondary: {
-      main: '#0f172a',
+      main: '##7a8f49',
     },
     text: {
-      primary: '#0f172a',
+      primary: '#364e14',
       secondary: '#334155',
     },
     divider: '#e2e8f0',
     background: {
-      default: '#f4f8fc',
+      default: '#fff',
       paper: '#ffffff',
     },
   },

@@ -15,6 +15,7 @@ import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { RegisterPage } from './pages/RegisterPage'
+import logo from './assets/logo.png'; 
 import { StoryDetailPage } from './pages/StoryDetailPage'
 import { UserDashboardPage } from './pages/UserDashboardPage'
 import { ReviewerDashboardPage } from './pages/ReviewerDashboardPage'
@@ -94,6 +95,8 @@ function App() {
               alignItems: { xs: 'stretch', md: 'center' },
             }}
           >
+            
+
             <Button
               component={Link}
               to="/"
@@ -104,14 +107,19 @@ function App() {
                 justifyContent: { xs: 'center', md: 'flex-start' },
                 gap: 1.2,
                 px: 1,
-                borderRadius: 2,
+                
                 minHeight: { xs: 42, md: 36 },
               }}
             >
-              <BookOpenText size={20} />
-              <Typography variant="h6" fontWeight={800} sx={{ fontSize: { xs: '1rem', sm: '1.15rem' } }}>
-                Storyn'Go
-              </Typography>
+              <img
+                src={logo}
+                alt="Storyn'Go"
+                style={{
+                  height: 45,
+                  width: 'auto',
+                  display: 'block'
+                }}
+              />
             </Button>
 
             <Box

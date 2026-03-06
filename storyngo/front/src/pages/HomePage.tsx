@@ -73,15 +73,13 @@ export function HomePage() {
         variant="outlined"
         sx={{
           p: { xs: 2.5, md: 4 },
-          borderRadius: 4,
-          background: 'linear-gradient(120deg, #ecfeff 0%, #f0f9ff 40%, #fffbeb 100%)',
         }}
       >
         <Typography variant="overline" color="primary" fontWeight={700}>
-          Storyn'Go Dashboard
+          Tableau de Bord de Storyn'Go
         </Typography>
         <Typography variant="h4" sx={{ mt: 0.8 }}>
-          Derniers Drops, tendances et votes
+          Derniers Histoires, tendances et votes
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mt: 1.5, maxWidth: 760 }}>
           Explorez les stories et les chapitres en tendance. Connectez-vous pour voter, commenter et publier.

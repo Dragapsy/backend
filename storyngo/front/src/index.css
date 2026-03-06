@@ -25,11 +25,6 @@ body {
   min-width: 320px;
   min-height: 100vh;
   color: var(--text-main);
-  background:
-    radial-gradient(circle at 8% 4%, rgba(125, 211, 252, 0.38), transparent 28%),
-    radial-gradient(circle at 94% 6%, rgba(253, 224, 71, 0.2), transparent 27%),
-    radial-gradient(circle at 80% 90%, rgba(34, 211, 238, 0.22), transparent 32%),
-    var(--surface-base);
 }
 
 #root {
