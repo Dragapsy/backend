@@ -7,14 +7,17 @@ import com.storyngo.dto.ChapterVersionDTO;
 import com.storyngo.dto.CommentCreateRequest;
 import com.storyngo.dto.CommentDTO;
 import com.storyngo.dto.ErrorResponse;
+import com.storyngo.dto.ReportCreateRequest;
 import com.storyngo.dto.StoryCreateRequest;
 import com.storyngo.dto.StoryDTO;
 import com.storyngo.dto.StoryDetailsDTO;
 import com.storyngo.dto.StoryQualityScoreDTO;
 import com.storyngo.dto.VoteResultDTO;
+import com.storyngo.dto.AdminReportDTO;
 import com.storyngo.exceptions.UnauthorizedException;
 import com.storyngo.models.User;
 import com.storyngo.services.CommentService;
+import com.storyngo.services.ReportService;
 import com.storyngo.services.StoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -43,10 +46,12 @@ public class StoryController {
 
     private final StoryService storyService;
     private final CommentService commentService;
+    private final ReportService reportService;
 
-    public StoryController(StoryService storyService, CommentService commentService) {
+    public StoryController(StoryService storyService, CommentService commentService, ReportService reportService) {
         this.storyService = storyService;
         this.commentService = commentService;
+        this.reportService = reportService;
     }
 
     @GetMapping("/stories")
@@ -303,6 +308,24 @@ public class StoryController {
     ) {
         User user = requireUser(principal);
         return commentService.addComment(user, id, request);
+    }
+
+    @PostMapping("/reports")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Creer un signalement sur chapitre/commentaire")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Signalement cree", content = @Content(schema = @Schema(implementation = AdminReportDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Signalement invalide", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Non authentifie", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Cible introuvable", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public AdminReportDTO createReport(
+        @AuthenticationPrincipal Object principal,
+        @Valid @RequestBody ReportCreateRequest request
+    ) {
+        User user = requireUser(principal);
+        return reportService.createReport(user, request);
     }
 
     private Long extractUserId(Object principal) {

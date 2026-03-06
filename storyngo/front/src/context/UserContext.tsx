@@ -1,8 +1,8 @@
 import { jwtDecode } from 'jwt-decode'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { UNAUTHORIZED_EVENT } from '../api/apiClient'
-import { login, register } from '../api/storyApi'
-import type { LoginRequest, RegisterRequest, UserDTO } from '../types'
+import { getCurrentUserProfile, login, register } from '../api/storyApi'
+import type { LoginRequest, RegisterRequest, UserDTO, UserRole } from '../types'
 
 interface UserContextValue {
   user: UserDTO | null
@@ -43,6 +43,7 @@ function buildUserFromToken(token: string, email?: string, pseudo?: string): Use
     id: Number(payload.sub),
     pseudo: nextPseudo,
     email: email ?? `${localPart}@unknown.local`,
+    role: 'USER' as UserRole,
   }
 }
 
@@ -80,6 +81,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUser(null)
     setAuthError(null)
   }, [])
+
+  const refreshProfile = useCallback(async () => {
+    try {
+      const profile = await getCurrentUserProfile()
+      localStorage.setItem(USER_KEY, JSON.stringify(profile))
+      setUser(profile)
+    } catch {
+      logout()
+    }
+  }, [logout])
 
   useEffect(() => {
     function handleUnauthorized() {
@@ -132,6 +143,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [token, logout])
 
+  useEffect(() => {
+    if (!token) {
+      return
+    }
+    void refreshProfile()
+  }, [token, refreshProfile])
+
   const loginUser = useCallback(async (request: LoginRequest) => {
     setAuthError(null)
     const response = await login(request)
@@ -140,7 +158,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(USER_KEY, JSON.stringify(nextUser))
     setToken(response.token)
     setUser(nextUser)
-  }, [])
+    await refreshProfile()
+  }, [refreshProfile])
 
   const registerUser = useCallback(async (request: RegisterRequest) => {
     setAuthError(null)
@@ -150,7 +169,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(USER_KEY, JSON.stringify(nextUser))
     setToken(response.token)
     setUser(nextUser)
-  }, [])
+    await refreshProfile()
+  }, [refreshProfile])
 
   const value = useMemo(
     () => ({

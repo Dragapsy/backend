@@ -28,6 +28,12 @@ cd C:\Users\<votre-user>\Desktop\ESGI\bakend
 .\mvnw.cmd spring-boot:run
 ```
 
+### Windows PowerShell (one-liner propre)
+
+```powershell
+$portOwner = Get-NetTCPConnection -LocalPort 8080 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty OwningProcess; if ($portOwner) { Stop-Process -Id $portOwner -Force }; Set-Location 'C:\Users\Aymane\Desktop\DEV\backend\storyngo\back'; Get-Content '.env' | ForEach-Object { if ($_ -and -not $_.StartsWith('#')) { $parts = $_ -split '=',2; if ($parts.Length -eq 2) { [System.Environment]::SetEnvironmentVariable($parts[0], $parts[1], 'Process') } } }; if (-not $env:JWT_SECRET -or $env:JWT_SECRET.Length -lt 44) { $env:JWT_SECRET = [Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Maximum 256 })) }; .\mvnw.cmd spring-boot:run
+```
+
 ### Windows CMD
 
 ```bat

@@ -9,6 +9,8 @@ import org.mapstruct.Mapping;
 public interface StoryMapper {
 
     @Mapping(target = "authorName", source = "author.pseudo")
+    @Mapping(target = "authorRole", source = "author.role")
+    @Mapping(target = "authorProfileImageUrl", source = "author.profileImageUrl")
     @Mapping(target = "chapterCount", expression = "java(story.getChapters() == null ? 0 : story.getChapters().size())")
     StoryDTO toDto(Story story);
 }

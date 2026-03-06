@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -45,6 +46,19 @@ public class AuthFilter extends OncePerRequestFilter {
     }
 
     private void setAuthentication(User user, HttpServletRequest request) {
+        if (user.isBannedPermanently()) {
+            return;
+        }
+
+        if (user.getBannedUntil() != null) {
+            if (user.getBannedUntil().isAfter(LocalDateTime.now())) {
+                return;
+            }
+            user.setBannedUntil(null);
+            user.setBanReason(null);
+            userRepository.save(user);
+        }
+
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
             user,
             null,

@@ -13,6 +13,10 @@ public record StoryDTO(
     String summary,
     @Schema(description = "Pseudo de l'auteur", example = "Auteur")
     String authorName,
+    @Schema(description = "Role de l'auteur", example = "REVIEWER")
+    String authorRole,
+    @Schema(description = "Photo de profil de l'auteur", example = "https://cdn.storyngo.dev/profiles/auteur.png")
+    String authorProfileImageUrl,
     @Schema(description = "Nombre de chapitres", example = "3")
     int chapterCount,
     @Schema(description = "Statut workflow")

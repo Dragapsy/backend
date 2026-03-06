@@ -1,5 +1,8 @@
 import { BookOpenText } from 'lucide-react'
 import AddIcon from '@mui/icons-material/Add'
+import AccountCircleIcon from '@mui/icons-material/AccountCircle'
+import DashboardCustomizeIcon from '@mui/icons-material/DashboardCustomize'
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import LoginIcon from '@mui/icons-material/Login'
 import LogoutIcon from '@mui/icons-material/Logout'
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1'
@@ -13,6 +16,11 @@ import { LoginPage } from './pages/LoginPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { StoryDetailPage } from './pages/StoryDetailPage'
+import { UserDashboardPage } from './pages/UserDashboardPage'
+import { ReviewerDashboardPage } from './pages/ReviewerDashboardPage'
+import { AdminDashboardPage } from './pages/AdminDashboardPage'
+import { LeaderboardPage } from './pages/LeaderboardPage'
+import type { UserRole } from './types'
 
 function ProtectedRoute({ children }: { children: ReactElement }) {
   const { isAuthenticated } = useUser()
@@ -33,6 +41,39 @@ function GuestOnlyRoute({ children }: { children: ReactElement }) {
   }
 
   return children
+}
+
+function RoleRoute({ children, allowedRoles }: { children: ReactElement; allowedRoles: UserRole[] }) {
+  const { isAuthenticated, user } = useUser()
+  const location = useLocation()
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />
+  }
+
+  if (!user || !allowedRoles.includes(user.role)) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return children
+}
+
+function DashboardRedirect() {
+  const { user } = useUser()
+
+  if (!user) {
+    return <Navigate to="/" replace />
+  }
+
+  if (user.role === 'ADMIN') {
+    return <Navigate to="/dashboard/admin" replace />
+  }
+
+  if (user.role === 'REVIEWER') {
+    return <Navigate to="/dashboard/reviewer" replace />
+  }
+
+  return <Navigate to="/dashboard/user" replace />
 }
 
 function App() {
@@ -69,7 +110,7 @@ function App() {
             >
               <BookOpenText size={20} />
               <Typography variant="h6" fontWeight={800} sx={{ fontSize: { xs: '1rem', sm: '1.15rem' } }}>
-                Storyn'Go Platform
+                Storyn'Go
               </Typography>
             </Button>
 
@@ -85,7 +126,37 @@ function App() {
             >
               {isAuthenticated ? (
                 <>
-                  <Chip label={user?.pseudo} color="primary" variant="outlined" sx={{ maxWidth: { xs: '100%', md: 'none' } }} />
+                  <Chip label={`${user?.pseudo} • ${user?.role}`} color="primary" variant="outlined" sx={{ maxWidth: { xs: '100%', md: 'none' } }} />
+                  <Button
+                    component={Link}
+                    to="/dashboard"
+                    variant="outlined"
+                    startIcon={<DashboardCustomizeIcon />}
+                    size="small"
+                    sx={{ minWidth: { xs: 'calc(50% - 4px)', md: 0 } }}
+                  >
+                    Dashboard
+                  </Button>
+                  <Button
+                    component={Link}
+                    to="/leaderboard"
+                    variant="outlined"
+                    startIcon={<EmojiEventsIcon />}
+                    size="small"
+                    sx={{ minWidth: { xs: 'calc(50% - 4px)', md: 0 } }}
+                  >
+                    Classement
+                  </Button>
+                  <Button
+                    component={Link}
+                    to="/dashboard/user"
+                    variant="outlined"
+                    startIcon={<AccountCircleIcon />}
+                    size="small"
+                    sx={{ minWidth: { xs: 'calc(50% - 4px)', md: 0 } }}
+                  >
+                    Profil
+                  </Button>
                   <Button
                     component={Link}
                     to="/stories/create"
@@ -142,6 +213,46 @@ function App() {
         <main>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardRedirect />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/user"
+              element={
+                <RoleRoute allowedRoles={['USER', 'REVIEWER', 'ADMIN']}>
+                  <UserDashboardPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/dashboard/reviewer"
+              element={
+                <RoleRoute allowedRoles={['REVIEWER', 'ADMIN']}>
+                  <ReviewerDashboardPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/dashboard/admin"
+              element={
+                <RoleRoute allowedRoles={['ADMIN']}>
+                  <AdminDashboardPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/leaderboard"
+              element={
+                <ProtectedRoute>
+                  <LeaderboardPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/stories/create"
               element={

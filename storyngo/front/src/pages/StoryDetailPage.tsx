@@ -24,6 +24,7 @@ import {
   addComment,
   approveStoryReview,
   archiveStory,
+  createReport,
   getComments,
   getStoryDetails,
   getStoryQualityScore,
@@ -75,6 +76,16 @@ function getQualityMention(score: number) {
   return 'Niveau a renforcer'
 }
 
+function formatAuthorDisplay(authorName: string, authorRole?: 'USER' | 'REVIEWER' | 'ADMIN') {
+  if (authorRole === 'ADMIN') {
+    return `${authorName} ° admin`
+  }
+  if (authorRole === 'REVIEWER') {
+    return `${authorName} ° reviewer`
+  }
+  return authorName
+}
+
 export function StoryDetailPage() {
   const { id } = useParams<{ id: string }>()
   const [storyDetails, setStoryDetails] = useState<StoryDetailsDTO | null>(null)
@@ -93,6 +104,9 @@ export function StoryDetailPage() {
   const [loadingQuality, setLoadingQuality] = useState(false)
   const [workflowBusy, setWorkflowBusy] = useState<'submit' | 'approve' | 'reject' | 'archive' | null>(null)
   const [workflowError, setWorkflowError] = useState<string | null>(null)
+  const [reportReason, setReportReason] = useState('')
+  const [reportingStory, setReportingStory] = useState(false)
+  const [reportMessage, setReportMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [votingId, setVotingId] = useState<number | null>(null)
@@ -251,6 +265,34 @@ export function StoryDetailPage() {
     }
   }
 
+  async function handleReportStory() {
+    if (!isAuthenticated || !storyDetails) {
+      return
+    }
+
+    const reason = reportReason.trim()
+    if (reason.length < 5) {
+      setReportMessage('Precisez un motif plus detaille pour le signalement.')
+      return
+    }
+
+    setReportingStory(true)
+    setReportMessage(null)
+    try {
+      await createReport({
+        type: 'STORY',
+        targetId: storyDetails.story.id,
+        reason,
+      })
+      setReportReason('')
+      setReportMessage('Signalement envoye a la moderation.')
+    } catch (err) {
+      setReportMessage(getApiErrorMessage(err, 'Signalement impossible pour le moment.'))
+    } finally {
+      setReportingStory(false)
+    }
+  }
+
   if (loading) {
     return <LoadingState label="Chargement de la story..." />
   }
@@ -265,6 +307,8 @@ export function StoryDetailPage() {
       </Stack>
     )
   }
+
+  const authorDisplay = formatAuthorDisplay(storyDetails.story.authorName, storyDetails.story.authorRole)
 
   return (
     <Box sx={{ display: 'grid', gap: 3.2 }}>
@@ -298,7 +342,7 @@ export function StoryDetailPage() {
             </Stack>
 
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1.8 }}>
-              Auteur principal: {storyDetails.story.authorName}
+              Auteur principal: {authorDisplay}
             </Typography>
           </Box>
 
@@ -332,6 +376,39 @@ export function StoryDetailPage() {
           </Paper>
         </Box>
       </Paper>
+
+      {isAuthenticated && (
+        <Paper variant="outlined" sx={{ p: 2.2, borderRadius: 3 }}>
+          <Typography variant="h6">Signaler cette histoire</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.4 }}>
+            En cas d'abus, spam ou contenu problematique, envoyez un signalement a l'equipe moderation.
+          </Typography>
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2} sx={{ mt: 1.2 }}>
+            <TextField
+              value={reportReason}
+              onChange={(event) => setReportReason(event.target.value)}
+              placeholder="Motif du signalement"
+              fullWidth
+              size="small"
+              inputProps={{ maxLength: 255 }}
+            />
+            <Button
+              variant="outlined"
+              disabled={reportingStory}
+              onClick={() => {
+                void handleReportStory()
+              }}
+            >
+              {reportingStory ? 'Envoi...' : 'Signaler'}
+            </Button>
+          </Stack>
+          {reportMessage && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              {reportMessage}
+            </Typography>
+          )}
+        </Paper>
+      )}
 
       <Paper variant="outlined" sx={{ p: 2.2 }}>
         <Button

@@ -20,15 +20,18 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final ChapterRepository chapterRepository;
     private final ModerationService moderationService;
+    private final GamificationService gamificationService;
 
     public CommentService(
         CommentRepository commentRepository,
         ChapterRepository chapterRepository,
-        ModerationService moderationService
+        ModerationService moderationService,
+        GamificationService gamificationService
     ) {
         this.commentRepository = commentRepository;
         this.chapterRepository = chapterRepository;
         this.moderationService = moderationService;
+        this.gamificationService = gamificationService;
     }
 
     @Transactional(readOnly = true)
@@ -57,6 +60,7 @@ public class CommentService {
             .build();
 
         Comment saved = commentRepository.save(comment);
+        gamificationService.awardXp(user, "ADD_COMMENT", 10, "CHAPTER", chapterId);
         return toDto(saved);
     }
 

@@ -37,10 +37,26 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(length = 1000)
+    private String bio;
+
+    @Column(length = 500)
+    private String profileImageUrl;
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private UserRole role = UserRole.USER;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean bannedPermanently = false;
+
+    @Column
+    private LocalDateTime bannedUntil;
+
+    @Column(length = 255)
+    private String banReason;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

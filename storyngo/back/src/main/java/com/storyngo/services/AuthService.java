@@ -52,6 +52,19 @@ public class AuthService {
         User user = userRepository.findByEmail(request.email())
             .orElseThrow(() -> new UnauthorizedException("Invalid credentials."));
 
+        if (user.isBannedPermanently()) {
+            throw new UnauthorizedException("Account is banned permanently.");
+        }
+
+        if (user.getBannedUntil() != null) {
+            if (user.getBannedUntil().isAfter(LocalDateTime.now())) {
+                throw new UnauthorizedException("Account is temporarily banned until " + user.getBannedUntil() + ".");
+            }
+            user.setBannedUntil(null);
+            user.setBanReason(null);
+            userRepository.save(user);
+        }
+
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new UnauthorizedException("Invalid credentials.");
         }

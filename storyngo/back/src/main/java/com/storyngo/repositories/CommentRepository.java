@@ -9,6 +9,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     List<Comment> findByChapterIdOrderByCreatedAtAsc(Long chapterId);
 
+    long countByUserId(Long userId);
+
     @Query("SELECT COUNT(c) FROM Comment c WHERE c.chapter.story.id = :storyId")
     long countByStoryId(Long storyId);
 }

@@ -9,6 +9,8 @@ public interface ChapterRepository extends JpaRepository<Chapter, Long> {
 
     List<Chapter> findByStoryIdOrderByOrderIndexAsc(Long storyId);
 
+    long countByStoryAuthorId(Long authorId);
+
     @Query(
         "SELECT c FROM Chapter c " +
         "LEFT JOIN Vote v ON v.chapter = c " +

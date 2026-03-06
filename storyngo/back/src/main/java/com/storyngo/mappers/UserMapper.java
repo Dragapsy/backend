@@ -12,6 +12,11 @@ public interface UserMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "role", ignore = true)
+    @Mapping(target = "bio", ignore = true)
+    @Mapping(target = "profileImageUrl", ignore = true)
+    @Mapping(target = "bannedPermanently", ignore = true)
+    @Mapping(target = "bannedUntil", ignore = true)
+    @Mapping(target = "banReason", ignore = true)
     User toUser(RegisterRequest request);
 
     @Mapping(target = "token", source = "token")

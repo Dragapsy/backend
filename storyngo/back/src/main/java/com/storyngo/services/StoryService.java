@@ -40,7 +40,7 @@ import static com.storyngo.services.StoryPermissionService.StoryAction.SUBMIT_FO
 @Service
 public class StoryService {
 
-    private static final int FIRST_CHAPTER_VOTE_THRESHOLD = 20;
+    private static final int FIRST_CHAPTER_VOTE_THRESHOLD = 5;
     private static final int VOTE_THRESHOLD_DECREMENT = 5;
     private static final int MIN_VOTE_THRESHOLD = 5;
     private static final int FIRST_CHAPTER_CHAR_LIMIT = 2000;
@@ -59,6 +59,7 @@ public class StoryService {
     private final ChapterMapper chapterMapper;
     private final ModerationService moderationService;
     private final StoryPermissionService storyPermissionService;
+    private final GamificationService gamificationService;
 
     public StoryService(
         StoryRepository storyRepository,
@@ -70,7 +71,8 @@ public class StoryService {
         StoryMapper storyMapper,
         ChapterMapper chapterMapper,
         ModerationService moderationService,
-        StoryPermissionService storyPermissionService
+        StoryPermissionService storyPermissionService,
+        GamificationService gamificationService
     ) {
         this.storyRepository = storyRepository;
         this.chapterRepository = chapterRepository;
@@ -82,11 +84,12 @@ public class StoryService {
         this.chapterMapper = chapterMapper;
         this.moderationService = moderationService;
         this.storyPermissionService = storyPermissionService;
+        this.gamificationService = gamificationService;
     }
 
     @Transactional(readOnly = true)
     public List<StoryDTO> getStories() {
-        return storyRepository.findAllByOrderByCreatedAtDesc()
+        return storyRepository.findByStatusOrderByCreatedAtDesc(StoryStatus.PUBLISHED)
             .stream()
             .map(storyMapper::toDto)
             .toList();
@@ -129,6 +132,7 @@ public class StoryService {
             .build();
 
         voteRepository.save(vote);
+        gamificationService.awardXp(user, "VOTE_CHAPTER", 3, "CHAPTER", chapterId);
 
         long voteCount = voteRepository.countByChapterId(chapterId);
         return voteCount >= chapter.getVoteThreshold();
@@ -136,7 +140,7 @@ public class StoryService {
 
     @Transactional(readOnly = true)
     public List<StoryDTO> getTrendingStories() {
-        return storyRepository.findTrendingStories()
+        return storyRepository.findTrendingStoriesByStatus(StoryStatus.PUBLISHED)
             .stream()
             .map(storyMapper::toDto)
             .toList();
@@ -188,6 +192,9 @@ public class StoryService {
 
         StoryDTO storyDto = storyMapper.toDto(savedStory);
         ChapterDTO chapterDto = chapterMapper.toDto(savedChapter, 0L, false);
+
+        gamificationService.awardXp(author, "CREATE_STORY", 80, "STORY", savedStory.getId());
+        gamificationService.awardXp(author, "CREATE_CHAPTER", 35, "CHAPTER", savedChapter.getId());
         return new StoryDetailsDTO(storyDto, java.util.List.of(chapterDto));
     }
 
@@ -235,6 +242,7 @@ public class StoryService {
 
         Chapter saved = chapterRepository.save(chapter);
         createVersionSnapshot(saved);
+        gamificationService.awardXp(author, "ADD_CHAPTER", 35, "CHAPTER", saved.getId());
         return chapterMapper.toDto(saved, 0L, false);
     }
 
@@ -320,6 +328,7 @@ public class StoryService {
 
         story.setStatus(StoryStatus.IN_REVIEW);
         Story saved = storyRepository.save(story);
+        gamificationService.awardXp(user, "SUBMIT_REVIEW", 12, "STORY", saved.getId());
         return storyMapper.toDto(saved);
     }
 
@@ -336,6 +345,7 @@ public class StoryService {
 
         story.setStatus(StoryStatus.PUBLISHED);
         Story saved = storyRepository.save(story);
+        gamificationService.awardXp(user, "APPROVE_REVIEW", 25, "STORY", saved.getId());
         return storyMapper.toDto(saved);
     }
 
@@ -352,6 +362,7 @@ public class StoryService {
 
         story.setStatus(StoryStatus.DRAFT);
         Story saved = storyRepository.save(story);
+        gamificationService.awardXp(user, "REJECT_REVIEW", 8, "STORY", saved.getId());
         return storyMapper.toDto(saved);
     }
 
@@ -368,6 +379,7 @@ public class StoryService {
 
         story.setStatus(StoryStatus.ARCHIVED);
         Story saved = storyRepository.save(story);
+        gamificationService.awardXp(user, "ARCHIVE_STORY", 5, "STORY", saved.getId());
         return storyMapper.toDto(saved);
     }
 

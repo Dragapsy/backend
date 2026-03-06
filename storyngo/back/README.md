@@ -6,18 +6,93 @@ Backend Spring Boot pour StorynGo.
 
 - API locale: `http://localhost:8080/api`
 
+## Base de donnees locale (PostgreSQL)
+
+Le projet supporte 2 modes:
+- mode principal (par defaut): PostgreSQL (base reelle)
+- mode secondaire (optionnel): H2 en memoire avec le profil `dev`
+
+### 1) Preparer l'environnement (une seule fois)
+
+Depuis `storyngo/back`, copier le fichier d'exemple:
+
+```powershell
+Copy-Item .env.postgres.example .env
+```
+
+Puis editer `.env` et mettre une vraie valeur pour `JWT_SECRET`.
+
+### 2) Demarrer PostgreSQL avec Docker
+
+Toujours dans `storyngo/back`:
+
+```powershell
+docker compose up -d
+```
+
+Verifier que le container est bien en `healthy`:
+
+```powershell
+docker compose ps
+```
+
+### 3) Lancer le backend (PostgreSQL par defaut)
+
+PowerShell:
+
+```powershell
+$env:DB_URL="jdbc:postgresql://localhost:5432/storyngo"
+$env:DB_USERNAME="storyngo"
+$env:DB_PASSWORD="storyngo_pwd"
+$env:JWT_SECRET="votre-secret-long-et-aleatoire"
+./mvnw.cmd spring-boot:run
+```
+
+Alternative en une ligne:
+
+```powershell
+$env:DB_URL="jdbc:postgresql://localhost:5432/storyngo"; $env:DB_USERNAME="storyngo"; $env:DB_PASSWORD="storyngo_pwd"; $env:JWT_SECRET="votre-secret-long-et-aleatoire"; ./mvnw.cmd spring-boot:run
+```
+
+### 3 bis) Optionnel: lancer en H2 (profil `dev`)
+
+```powershell
+$env:SPRING_PROFILES_ACTIVE="dev"
+$env:JWT_SECRET="votre-secret-long-et-aleatoire"
+./mvnw.cmd spring-boot:run
+```
+
+### 4) Arreter PostgreSQL
+
+```powershell
+docker compose down
+```
+
+Pour supprimer aussi les donnees (reset complet):
+
+```powershell
+docker compose down -v
+```
+
+### Notes importantes
+
+- PostgreSQL est maintenant la configuration par defaut de l'application.
+- Le seed `data.sql` n'est pas injecte en mode PostgreSQL (`spring.sql.init.mode=never`) pour proteger tes vraies donnees.
+- Le profil `dev` reste disponible pour des essais rapides en H2.
+- Les tests continuent d'utiliser H2 via `application-test.properties`.
+
 ## Demarrer
 
 - Lancer l'application :
 
 ```powershell
-& "C:\Users\Aymane\Desktop\DEV\Projet annuelle\backend\mvnw.cmd" spring-boot:run
+./mvnw.cmd spring-boot:run
 ```
 
 - Lancer les tests :
 
 ```powershell
-& "C:\Users\Aymane\Desktop\DEV\Projet annuelle\backend\mvnw.cmd" test
+./mvnw.cmd test
 ```
 
 ## Swagger

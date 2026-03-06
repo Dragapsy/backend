@@ -41,8 +41,28 @@ public class Report {
     @Column(nullable = false)
     private ReportType type;
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ReportStatus status = ReportStatus.OPEN;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ReportPriority priority = ReportPriority.MEDIUM;
+
     @Column(nullable = false)
     private String reason;
+
+    @Column
+    private LocalDateTime resolvedAt;
+
+    @ManyToOne
+    @JoinColumn(name = "resolved_by_id")
+    private User resolvedBy;
+
+    @Column(length = 255)
+    private String resolutionNote;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
