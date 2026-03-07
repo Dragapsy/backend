@@ -77,7 +77,7 @@ class StoryServiceIntegrationTests {
         List<Chapter> chapters = chapterRepository.findByStoryIdOrderByOrderIndexAsc(stories.getFirst().getId());
         assertEquals(1, chapters.size());
         assertEquals(1, chapters.getFirst().getOrderIndex());
-        assertEquals(20, chapters.getFirst().getVoteThreshold());
+        assertEquals(5, chapters.getFirst().getVoteThreshold());
         assertEquals(2000, chapters.getFirst().getCharLimit());
     }
 

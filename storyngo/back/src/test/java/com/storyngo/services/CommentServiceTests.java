@@ -33,11 +33,14 @@ class CommentServiceTests {
     @Mock
     private ChapterRepository chapterRepository;
 
+    @Mock
+    private GamificationService gamificationService;
+
     private CommentService commentService;
 
     @BeforeEach
     void setUp() {
-        commentService = new CommentService(commentRepository, chapterRepository, new ModerationService());
+        commentService = new CommentService(commentRepository, chapterRepository, new ModerationService(), gamificationService);
     }
 
     @Test
