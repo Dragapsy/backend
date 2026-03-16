@@ -62,31 +62,24 @@ export function LeaderboardPage() {
 
   return (
     <Stack spacing={3}>
-      <Paper
-        variant="outlined"
-        sx={{
-          p: { xs: 2.5, md: 4 },
-          borderRadius: 1,
-        }}
-      >
+      
         <Typography variant="overline" color="primary" fontWeight={700}>
           Classement StorynGo
         </Typography>
         <Typography variant="h4" sx={{ mt: 0.8 }}>
-          Top 50 XP
+          Top 50 des utilisateurs les plus actif
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mt: 1.2 }}>
-          Comparez la progression de la communaute sur la semaine ou le mois.
+          Comparez la progression de la communauté sur la semaine ou le mois.
         </Typography>
-      </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 1 }}>
+      
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', md: 'center' }}>
           <TextField
             select
-            label="Periode"
+            label="Période"
             value={period}
             onChange={(event) => setPeriod(event.target.value as LeaderboardPeriod)}
             sx={{ minWidth: 200 }}
@@ -97,20 +90,20 @@ export function LeaderboardPage() {
           </TextField>
           <TextField
             select
-            label="Role"
+            label="Rôle"
             value={roleFilter}
             onChange={(event) => setRoleFilter(event.target.value as 'ALL' | UserRole)}
             sx={{ minWidth: 180 }}
             size="small"
           >
             <MenuItem value="ALL">Tous</MenuItem>
-            <MenuItem value="USER">User</MenuItem>
-            <MenuItem value="REVIEWER">Reviewer</MenuItem>
-            <MenuItem value="ADMIN">Admin</MenuItem>
+            <MenuItem value="USER">Utilisateur</MenuItem>
+            <MenuItem value="REVIEWER">Auteur</MenuItem>
+            <MenuItem value="ADMIN">Administrateur</MenuItem>
           </TextField>
-          <Typography color="text.secondary">Affichage des 50 meilleurs profils.</Typography>
+          <Typography color="text.secondary">Affichage des 50 meilleurs utilisateurs.</Typography>
         </Stack>
-      </Paper>
+
 
       <Stack spacing={1.2}>
         {displayedEntries.length === 0 ? (

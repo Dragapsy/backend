@@ -49,16 +49,16 @@ export function CreateStoryPage() {
 
   return (
     <Paper variant="outlined" sx={{ p: { xs: 3, md: 4 } }}>
-      <Typography variant="h4">Creation de story</Typography>
+      <Typography variant="h4">Création de story</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
         Publiez une nouvelle intrigue et lancez votre premiere vague de votes.
       </Typography>
       <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-        Le premier chapitre definit le ton: soyez clair sur le hook narratif et l'objectif.
+        Le premier chapitre définit le ton de votre histoire : soyez les plus créatif possible afin d'attiré l'œil.
       </Typography>
 
       {error && <Box sx={{ mt: 2 }}><ErrorBanner message={error} compact /></Box>}
-      {submitting && <Box sx={{ mt: 2 }}><LoadingState label="Publication de la story..." compact /></Box>}
+      {submitting && <Box sx={{ mt: 2 }}><LoadingState label="Publication de l'histoire..." compact /></Box>}
 
       <Stack component="form" spacing={2} sx={{ mt: 3 }} onSubmit={handleSubmit}>
         <TextField
@@ -73,7 +73,7 @@ export function CreateStoryPage() {
         />
 
         <TextField
-          label="Resume"
+          label="Résumé"
           required
           inputProps={{ maxLength: 2000 }}
           rows={3}
@@ -86,7 +86,7 @@ export function CreateStoryPage() {
         />
 
         <TextField
-          label="Contenu du chapitre 1"
+          label="Contenu de votre premier chapitre..."
           required
           inputProps={{ maxLength: 2000 }}
           rows={10}
