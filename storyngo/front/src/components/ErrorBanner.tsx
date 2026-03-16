@@ -20,7 +20,7 @@ export function ErrorBanner({
     <Alert
       severity="error"
       icon={<ErrorOutlineIcon fontSize={compact ? 'small' : 'medium'} />}
-      sx={{ alignItems: compact ? 'center' : 'flex-start', borderRadius: 3 }}
+      sx={{ alignItems: compact ? 'center' : 'flex-start', borderRadius: 1 }}
       action={
         actionLabel && onAction ? (
           <Button color="inherit" size="small" onClick={onAction}>

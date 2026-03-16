@@ -66,8 +66,7 @@ export function LeaderboardPage() {
         variant="outlined"
         sx={{
           p: { xs: 2.5, md: 4 },
-          borderRadius: 4,
-          background: 'linear-gradient(120deg, #eff6ff 0%, #f0fdf4 45%, #fefce8 100%)',
+          borderRadius: 1,
         }}
       >
         <Typography variant="overline" color="primary" fontWeight={700}>
@@ -83,7 +82,7 @@ export function LeaderboardPage() {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3 }}>
+      <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 1 }}>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', md: 'center' }}>
           <TextField
             select
@@ -115,12 +114,12 @@ export function LeaderboardPage() {
 
       <Stack spacing={1.2}>
         {displayedEntries.length === 0 ? (
-          <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3 }}>
+          <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 1 }}>
             <Typography color="text.secondary">Aucune donnee XP pour ce filtre.</Typography>
           </Paper>
         ) : (
           displayedEntries.map((entry, index) => (
-            <Paper key={entry.userId} variant="outlined" sx={{ p: 2.2, borderRadius: 3 }}>
+            <Paper key={entry.userId} variant="outlined" sx={{ p: 2.2, borderRadius: 1 }}>
               <Box
                 sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', cursor: 'pointer' }}
                 onClick={() => void handleOpenProfile(entry.userId)}

@@ -10,7 +10,7 @@ interface EmptyStateProps {
 
 export function EmptyState({ title, description, actionLabel, onAction }: EmptyStateProps) {
   return (
-    <Paper variant="outlined" sx={{ px: 3, py: 4, textAlign: 'center', borderRadius: 3 }}>
+    <Paper variant="outlined" sx={{ px: 3, py: 4, textAlign: 'center', borderRadius: 1 }}>
       <Stack spacing={1} alignItems="center">
         <InboxOutlinedIcon color="disabled" />
         <Typography variant="subtitle1" fontWeight={700}>

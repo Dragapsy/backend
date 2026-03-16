@@ -12,7 +12,7 @@ export function LoadingState({
   compact = false,
 }: LoadingStateProps) {
   return (
-    <Paper variant="outlined" sx={{ px: compact ? 2 : 3, py: compact ? 1.5 : 3, borderRadius: 3 }}>
+    <Paper variant="outlined" sx={{ px: compact ? 2 : 3, py: compact ? 1.5 : 3, borderRadius: 1 }}>
       <Stack direction="row" spacing={1.5} alignItems="center">
         <CircularProgress size={compact ? 18 : 22} />
         <Stack spacing={0.2}>

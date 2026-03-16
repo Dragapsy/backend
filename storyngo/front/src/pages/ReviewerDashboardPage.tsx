@@ -67,8 +67,7 @@ export function ReviewerDashboardPage() {
         variant="outlined"
         sx={{
           p: { xs: 2.5, md: 4 },
-          borderRadius: 4,
-          background: 'linear-gradient(120deg, #f0f9ff 0%, #ecfeff 45%, #f8fafc 100%)',
+          borderRadius: 1,
         }}
       >
         <Typography variant="overline" color="primary" fontWeight={700}>
@@ -96,7 +95,7 @@ export function ReviewerDashboardPage() {
         ) : (
           <Stack spacing={2}>
             {pendingStories.map((story) => (
-              <Paper key={story.id} variant="outlined" sx={{ p: 2.2, borderRadius: 3 }}>
+              <Paper key={story.id} variant="outlined" sx={{ p: 2.2, borderRadius: 1 }}>
                 <Box sx={{ display: 'grid', gap: 1.6 }}>
                   <StoryCard story={story} />
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>

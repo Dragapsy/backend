@@ -32,6 +32,7 @@ export function UserDashboardPage() {
   const [followLoadingId, setFollowLoadingId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [editMode, setEditMode] = useState(false)
 
   useEffect(() => {
     async function loadProfile() {
@@ -61,6 +62,21 @@ export function UserDashboardPage() {
 
     void loadProfile()
   }, [])
+
+  function getXpActionLabel(event: UserXpEventDTO) {
+  switch (event.action) {
+    case 'CREATE_STORY':
+      return `Création d'une histoire`;
+    case 'CREATE_CHAPTER':
+      return `Création d'un chapitre`;
+    case 'VOTE_CHAPTER':
+      return `Vote sur un chapitre`;
+    case 'SUBMIT_REVIEW':
+      return `Ecrire un commentaire`;
+    default:
+      return event.action; // fallback si l’action est inconnue
+  }
+}
 
   async function handleSaveProfile() {
     setSaving(true)
@@ -116,207 +132,314 @@ export function UserDashboardPage() {
 
   return (
     <Stack spacing={3}>
-      <Paper
-        variant="outlined"
-        sx={{
-          p: { xs: 2.5, md: 4 },
-          borderRadius: 4,
-          background: 'linear-gradient(120deg, #f8fafc 0%, #ecfeff 45%, #f5f3ff 100%)',
-        }}
-      >
-        <Typography variant="overline" color="primary" fontWeight={700}>
-          Dashboard User
-        </Typography>
-        <Typography variant="h4" sx={{ mt: 0.8 }}>
-          Mon profil et mon activite
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 1.2 }}>
-          Consultez vos informations publiques et votre progression sur Storyn&apos;Go.
-        </Typography>
-      </Paper>
+
+      <Typography variant="h4" sx={{ mt: 0.8 }}>
+        Mon profil et mon activite
+      </Typography>
+      <Typography variant="body1" color="text.secondary" sx={{ mt: 1.2 }}>
+        Consultez vos informations publiques et votre progression sur Storyn&apos;Go.
+      </Typography>
+
 
       {error && <Alert severity="error">{error}</Alert>}
       {successMessage && <Alert severity="success">{successMessage}</Alert>}
 
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
-        <Typography variant="h6" sx={{ mb: 1.5 }}>
-          Informations du compte
-        </Typography>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-          <Avatar src={profile?.profileImageUrl ?? undefined} alt={profile?.pseudo} sx={{ width: 58, height: 58 }}>
-            {profile?.pseudo?.slice(0, 1).toUpperCase()}
-          </Avatar>
-          <Typography color="text.secondary">Photo de profil + infos publiques editables</Typography>
-        </Stack>
-        <Stack spacing={0.9}>
-          <Typography><strong>Pseudo:</strong> {profile?.pseudo}</Typography>
-          <Typography><strong>Email:</strong> {profile?.email}</Typography>
-          <Typography><strong>Role:</strong> {profile?.role}</Typography>
-          <Typography><strong>Inscription:</strong> {profile?.createdAt ? new Date(profile.createdAt).toLocaleString() : '-'}</Typography>
-        </Stack>
-      </Paper>
-
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
-        <Typography variant="h6" sx={{ mb: 1.5 }}>
-          Modifier mon profil
-        </Typography>
-        <Stack spacing={2}>
-          <TextField
-            label="Pseudo"
-            value={pseudo}
-            onChange={(event) => setPseudo(event.target.value)}
-            inputProps={{ maxLength: 30 }}
-            fullWidth
-          />
-          <TextField
-            label="URL photo de profil"
-            value={profileImageUrl}
-            onChange={(event) => setProfileImageUrl(event.target.value)}
-            inputProps={{ maxLength: 500 }}
-            fullWidth
-          />
-          <TextField
-            label="Bio"
-            value={bio}
-            onChange={(event) => setBio(event.target.value)}
-            inputProps={{ maxLength: 1000 }}
-            fullWidth
-            multiline
-            minRows={3}
-          />
-          <Box>
-            <Button variant="contained" onClick={() => void handleSaveProfile()} disabled={saving}>
-              {saving ? 'Sauvegarde...' : 'Sauvegarder'}
-            </Button>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 2,
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }
+        }}
+      >
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 3,
+            borderColor: '#fff',
+            textAlign: 'center'
+          }}
+        >
+          <Box
+            sx={{
+              width: 70,
+              height: 70,
+              borderRadius: '50%',
+              backgroundColor: 'text.primary',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mx: 'auto',
+              mb: 1.5
+            }}
+          >
+            <Typography color="#fff" variant="h5" fontWeight={700}>
+              {profile?.storyCount ?? 0}
+            </Typography>
           </Box>
-        </Stack>
-      </Paper>
 
-      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' } }}>
-        <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3 }}>
           <Typography color="text.secondary">Histoires</Typography>
-          <Typography variant="h4" fontWeight={700}>{profile?.storyCount ?? 0}</Typography>
         </Paper>
-        <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3 }}>
+
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 3,
+            borderColor: '#fff',
+            textAlign: 'center'
+          }}
+        >
+          <Box
+            sx={{
+              width: 70,
+              height: 70,
+              borderRadius: '50%',
+              backgroundColor: 'text.primary',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mx: 'auto',
+              mb: 1.5
+            }}
+          >
+            <Typography color="#fff" variant="h5" fontWeight={700}>
+              {profile?.chapterCount ?? 0}
+            </Typography>
+          </Box>
+
           <Typography color="text.secondary">Chapitres</Typography>
-          <Typography variant="h4" fontWeight={700}>{profile?.chapterCount ?? 0}</Typography>
         </Paper>
-        <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3 }}>
+
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 3,
+            borderColor: '#fff',
+            textAlign: 'center'
+          }}
+        >
+          <Box
+            sx={{
+              width: 70,
+              height: 70,
+              borderRadius: '50%',
+              backgroundColor: 'text.primary',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mx: 'auto',
+              mb: 1.5
+            }}
+          >
+            <Typography color="#fff" variant="h5" fontWeight={700}>
+              {profile?.commentCount ?? 0}
+            </Typography>
+          </Box>
+
           <Typography color="text.secondary">Commentaires</Typography>
-          <Typography variant="h4" fontWeight={700}>{profile?.commentCount ?? 0}</Typography>
         </Paper>
       </Box>
 
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
-        <Typography variant="h6" sx={{ mb: 1.5 }}>
-          Progression
-        </Typography>
-        <Stack spacing={1.1}>
-          <Typography>
-            <strong>XP:</strong> {profile?.xp ?? 0}
+      <Typography variant="h6" sx={{ mb: 1.5 }}>
+        Informations du compte
+      </Typography>
+      <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+        <Avatar src={profile?.profileImageUrl ?? undefined} alt={profile?.pseudo} sx={{ width: 58, height: 58 }}>
+          {profile?.pseudo?.slice(0, 1).toUpperCase()}
+        </Avatar>
+      </Stack>
+      <Stack spacing={0.9}>
+        <Typography><strong>Pseudo:</strong> {profile?.pseudo}</Typography>
+        <Typography><strong>Email:</strong> {profile?.email}</Typography>
+        <Typography><strong>Role:</strong> {profile?.role}</Typography>
+        <Typography><strong>Inscription:</strong> {profile?.createdAt ? new Date(profile.createdAt).toLocaleString() : '-'}</Typography>
+      </Stack>
+      {editMode && (
+        <Paper variant="outlined" sx={{ p: 3, borderRadius: 1 }}>
+          <Typography variant="h6" sx={{ mb: 1.5 }}>
+            Modifier mon profil
           </Typography>
-          <Typography>
-            <strong>Niveau:</strong> {profile?.level ?? 1} • {profile?.levelTitle ?? 'Novice'}
-          </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, pt: 0.5 }}>
-            {(profile?.badges ?? []).length > 0 ? (
-              (profile?.badges ?? []).map((badge) => <Chip key={badge} label={badge} color="primary" variant="outlined" />)
-            ) : (
-              <Typography color="text.secondary">Aucun badge pour le moment.</Typography>
-            )}
-          </Box>
-        </Stack>
-      </Paper>
 
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
-        <Typography variant="h6" sx={{ mb: 1.5 }}>
-          Classement hebdo XP
-        </Typography>
-        {leaderboard.length === 0 ? (
-          <Typography color="text.secondary">Aucun mouvement XP cette semaine.</Typography>
-        ) : (
-          <Stack spacing={1}>
-            {leaderboard.map((entry, index) => (
-              <Box
-                key={entry.userId}
-                sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.8, borderBottom: '1px dashed', borderColor: 'divider' }}
+          <Stack spacing={2}>
+            <TextField
+              label="Pseudo"
+              value={pseudo}
+              onChange={(event) => setPseudo(event.target.value)}
+              inputProps={{ maxLength: 30 }}
+              fullWidth
+            />
+
+            <TextField
+              label="URL photo de profil"
+              value={profileImageUrl}
+              onChange={(event) => setProfileImageUrl(event.target.value)}
+              inputProps={{ maxLength: 500 }}
+              fullWidth
+            />
+
+            <TextField
+              label="Bio"
+              value={bio}
+              onChange={(event) => setBio(event.target.value)}
+              inputProps={{ maxLength: 1000 }}
+              fullWidth
+              multiline
+              minRows={3}
+            />
+
+            <Box>
+              <Button
+                variant="contained"
+                onClick={() => void handleSaveProfile()}
+                disabled={saving}
               >
-                <Stack>
-                  <Typography>
-                    #{index + 1} {entry.pseudo}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    +{entry.weeklyXp} XP • Lv {entry.level}
-                  </Typography>
-                </Stack>
-                {entry.userId !== profile?.id && (
+                {saving ? 'Sauvegarde...' : 'Sauvegarder'}
+              </Button>
+            </Box>
+          </Stack>
+        </Paper>
+      )}
+      <Button
+        variant="outlined"
+        onClick={() => setEditMode((prev) => !prev)}
+      >
+        {editMode ? 'Fermer' : 'Modifier mon profil'}
+      </Button>
+
+
+      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <Paper variant="outlined" sx={{ p: 3, borderRadius: 1, flex: 1, minWidth: 280 }}>
+          <Typography variant="h6" sx={{ mb: 1.5 }}>
+            Progression de l'Auteur
+          </Typography>
+          <Stack spacing={1.1}>
+            <Typography>
+              <strong>XP:</strong> {profile?.xp ?? 0}
+            </Typography>
+            <Typography>
+              <strong>Niveau:</strong> {profile?.level ?? 1} • {profile?.levelTitle ?? 'Novice'}
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, pt: 0.5 }}>
+              {(profile?.badges ?? []).length > 0 ? (
+                (profile?.badges ?? []).map((badge) => <Chip key={badge} label={badge} color="primary" variant="outlined" />)
+              ) : (
+                <Typography color="text.secondary">Aucun badge pour le moment.</Typography>
+              )}
+            </Box>
+          </Stack>
+        </Paper>
+
+        <Paper variant="outlined" sx={{ p: 3, flex: 1, minWidth: 280 }}>
+          <Typography variant="h6" sx={{ mb: 1.5 }}>
+            Classement hebdomadaire
+          </Typography>
+          {leaderboard.length === 0 ? (
+            <Typography color="text.secondary">Aucun mouvement XP cette semaine.</Typography>
+          ) : (
+            <Stack spacing={1}>
+              {leaderboard.map((entry, index) => (
+                <Box
+                  key={entry.userId}
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    py: 0.8,
+                    borderBottom: '1px dashed',
+                    borderColor: 'divider',
+                  }}
+                >
+                  <Stack>
+                    <Typography>
+                      #{index + 1} {entry.pseudo}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      +{entry.weeklyXp} XP • Lv {entry.level}
+                    </Typography>
+                  </Stack>
+                  {entry.userId !== profile?.id && (
+                    <Button
+                      size="small"
+                      variant={followingIds.includes(entry.userId) ? 'outlined' : 'contained'}
+                      disabled={followLoadingId === entry.userId}
+                      onClick={() => void handleFollowToggle(entry.userId, followingIds.includes(entry.userId))}
+                    >
+                      {followingIds.includes(entry.userId) ? 'Ne plus suivre' : 'Suivre'}
+                    </Button>
+                  )}
+                </Box>
+              ))}
+            </Stack>
+          )}
+        </Paper>
+      </Box>
+
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '40% 60%' },
+          gap: 2,
+        }}
+      >
+        <Paper variant="outlined" sx={{ p: 3, borderRadius: 1 }}>
+          <Typography variant="h6" sx={{ mb: 1.5 }}>
+            Comptes suivis
+          </Typography>
+          {following.length === 0 ? (
+            <Typography color="text.secondary">Vous ne suivez encore personne.</Typography>
+          ) : (
+            <Stack spacing={1.2}>
+              {following.map((followedUser) => (
+                <Box
+                  key={followedUser.userId}
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    py: 0.8,
+                    borderBottom: '1px dashed',
+                    borderColor: 'divider',
+                  }}
+                >
+                  <Stack spacing={0.2}>
+                    <Typography>{followedUser.pseudo}</Typography>
+                    <Typography variant="caption" color="text.secondary">{followedUser.role}</Typography>
+                  </Stack>
                   <Button
                     size="small"
-                    variant={followingIds.includes(entry.userId) ? 'outlined' : 'contained'}
-                    disabled={followLoadingId === entry.userId}
-                    onClick={() => void handleFollowToggle(entry.userId, followingIds.includes(entry.userId))}
+                    variant="outlined"
+                    disabled={followLoadingId === followedUser.userId}
+                    onClick={() => void handleFollowToggle(followedUser.userId, true)}
                   >
-                    {followingIds.includes(entry.userId) ? 'Ne plus suivre' : 'Suivre'}
+                    Ne plus suivre
                   </Button>
-                )}
-              </Box>
-            ))}
-          </Stack>
-        )}
-      </Paper>
+                </Box>
+              ))}
+            </Stack>
+          )}
+        </Paper>
 
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
-        <Typography variant="h6" sx={{ mb: 1.5 }}>
-          Comptes suivis
-        </Typography>
-        {following.length === 0 ? (
-          <Typography color="text.secondary">Vous ne suivez encore personne.</Typography>
-        ) : (
-          <Stack spacing={1.2}>
-            {following.map((followedUser) => (
-              <Box
-                key={followedUser.userId}
-                sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.8, borderBottom: '1px dashed', borderColor: 'divider' }}
-              >
-                <Stack spacing={0.2}>
-                  <Typography>{followedUser.pseudo}</Typography>
-                  <Typography variant="caption" color="text.secondary">{followedUser.role}</Typography>
-                </Stack>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  disabled={followLoadingId === followedUser.userId}
-                  onClick={() => void handleFollowToggle(followedUser.userId, true)}
-                >
-                  Ne plus suivre
-                </Button>
-              </Box>
-            ))}
-          </Stack>
-        )}
-      </Paper>
+        <Paper variant="outlined" sx={{ p: 3, borderRadius: 1 }}>
+          <Typography variant="h6" sx={{ mb: 1.5 }}>
+            Histoires des auteurs suivis
+          </Typography>
+          {feed.length === 0 ? (
+            <Typography color="text.secondary">Suivez des auteurs pour voir leurs histoires ici.</Typography>
+          ) : (
+            <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' } }}>
+              {feed.map((story) => (
+                <StoryCard key={story.id} story={story} />
+              ))}
+            </Box>
+          )}
+        </Paper>
+      </Box>
 
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
+      <Paper variant="outlined" sx={{ p: 3, borderRadius: 1 }}>
         <Typography variant="h6" sx={{ mb: 1.5 }}>
-          Feed personnalise
-        </Typography>
-        {feed.length === 0 ? (
-          <Typography color="text.secondary">Suivez des auteurs pour voir leurs histoires ici.</Typography>
-        ) : (
-          <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
-            {feed.map((story) => (
-              <StoryCard key={story.id} story={story} />
-            ))}
-          </Box>
-        )}
-      </Paper>
-
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
-        <Typography variant="h6" sx={{ mb: 1.5 }}>
-          Historique XP
+          Historique des points d'expérience
         </Typography>
         {xpHistory.length === 0 ? (
-          <Typography color="text.secondary">Aucun evenement XP pour le moment.</Typography>
+          <Typography color="text.secondary">Aucun point d'expérience acquis.</Typography>
         ) : (
           <Stack spacing={1.1}>
             {xpHistory.map((event) => (
@@ -325,7 +448,8 @@ export function UserDashboardPage() {
                 sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.8, borderBottom: '1px dashed', borderColor: 'divider' }}
               >
                 <Stack spacing={0.2}>
-                  <Typography>{event.action}</Typography>
+                  
+                  <Typography>{getXpActionLabel(event)}</Typography>
                   <Typography variant="caption" color="text.secondary">
                     {new Date(event.createdAt).toLocaleString()} • {event.referenceType}
                     {event.referenceId ? ` #${event.referenceId}` : ''}

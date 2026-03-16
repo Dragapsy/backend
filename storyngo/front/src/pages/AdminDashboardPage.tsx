@@ -124,7 +124,7 @@ export function AdminDashboardPage() {
         sx={{
           p: { xs: 2.5, md: 4 },
           borderRadius: 4,
-          background: 'linear-gradient(120deg, #fff7ed 0%, #fef2f2 45%, #f8fafc 100%)',
+          
         }}
       >
         <Typography variant="overline" color="error" fontWeight={700}>
@@ -150,7 +150,7 @@ export function AdminDashboardPage() {
       ) : (
         <Stack spacing={1.5}>
           {users.map((user) => (
-            <Paper key={user.id} variant="outlined" sx={{ p: 2.2, borderRadius: 3 }}>
+            <Paper key={user.id} variant="outlined" sx={{ p: 2.2, borderRadius: 1 }}>
               <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2} alignItems={{ xs: 'flex-start', md: 'center' }}>
                 <Typography variant="h6" sx={{ flexGrow: 1 }}>
                   {user.pseudo}
@@ -216,7 +216,7 @@ export function AdminDashboardPage() {
         </Stack>
       )}
 
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
+      <Paper variant="outlined" sx={{ p: 3, borderRadius: 1 }}>
         <Typography variant="h5" sx={{ mb: 1.5 }}>
           Signalements priorises
         </Typography>
@@ -271,7 +271,7 @@ export function AdminDashboardPage() {
         )}
       </Paper>
 
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
+      <Paper variant="outlined" sx={{ p: 3, borderRadius: 1 }}>
         <Typography variant="h5" sx={{ mb: 1.5 }}>
           Journal d&apos;audit admin
         </Typography>

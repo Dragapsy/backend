@@ -320,8 +320,7 @@ export function StoryDetailPage() {
         variant="outlined"
         sx={{
           p: { xs: 2.5, md: 3.4 },
-          borderRadius: 4,
-          background: 'linear-gradient(120deg, #ecfeff 0%, #f0f9ff 40%, #fffbeb 100%)',
+          borderRadius: 1,
         }}
       >
         <Box sx={{ display: 'grid', gap: 2.6, gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' } }}>
@@ -378,7 +377,7 @@ export function StoryDetailPage() {
       </Paper>
 
       {isAuthenticated && (
-        <Paper variant="outlined" sx={{ p: 2.2, borderRadius: 3 }}>
+        <Paper variant="outlined" sx={{ p: 2.2, borderRadius: 1 }}>
           <Typography variant="h6">Signaler cette histoire</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.4 }}>
             En cas d'abus, spam ou contenu problematique, envoyez un signalement a l'equipe moderation.

@@ -30,7 +30,7 @@ export function HomePage() {
         getTrendingStories(),
         getUpcomingChapters(),
       ])
-      setStories(drops)
+      setStories(drops.slice(0, 3))
       setTrendingStories(trending)
       setUpcomingChapters(upcoming)
     } catch {
@@ -100,7 +100,7 @@ export function HomePage() {
       {error && <ErrorBanner message={error} actionLabel="Reessayer" onAction={() => void loadDashboard()} />}
 
       <section>
-        <SectionTitle title="Derniers Drops" subtitle="Stories recemment publiees" />
+        <SectionTitle title="Les Dernières Histoires" subtitle="Stories recemment publiees" />
         {stories.length === 0 && !loading ? (
           <EmptyState
             title="Aucune story recente"
