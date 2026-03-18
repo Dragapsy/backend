@@ -12,6 +12,7 @@ import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useUser } from './context/UserContext'
 import { CreateStoryPage } from './pages/CreateStoryPage'
 import { HomePage } from './pages/HomePage'
+import { ListeStoriesPage } from './pages/ListeStoriesPage'
 import { LoginPage } from './pages/LoginPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -137,6 +138,13 @@ function App() {
                   <Chip label={`${user?.pseudo} • ${user?.role}`} color="primary" variant="outlined" sx={{ maxWidth: { xs: '100%', md: 'none' } }} />
                   <Button
                     component={Link}
+                    to="/les-histoires"
+                    variant="outlined"
+                  >
+                    Les Histoires
+                  </Button>
+                  <Button
+                    component={Link}
                     to="/dashboard"
                     variant="outlined"
                     startIcon={<DashboardCustomizeIcon />}
@@ -190,6 +198,13 @@ function App() {
                 <>
                   <Button
                     component={Link}
+                    to="/les-histoires"
+                    variant="outlined"
+                  >
+                    Les Histoires
+                  </Button>
+                  <Button
+                    component={Link}
                     to="/login"
                     variant="outlined"
                     color="secondary"
@@ -229,6 +244,8 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/les-histoires" element={<ListeStoriesPage />} />
+
             <Route
               path="/dashboard/user"
               element={
