@@ -16,7 +16,7 @@ import { ListeStoriesPage } from './pages/ListeStoriesPage'
 import { LoginPage } from './pages/LoginPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { RegisterPage } from './pages/RegisterPage'
-import logo from './assets/logo.png'; 
+import logo from './assets/logo.png';
 import { StoryDetailPage } from './pages/StoryDetailPage'
 import { UserDashboardPage } from './pages/UserDashboardPage'
 import { ReviewerDashboardPage } from './pages/ReviewerDashboardPage'
@@ -71,9 +71,7 @@ function DashboardRedirect() {
     return <Navigate to="/dashboard/admin" replace />
   }
 
-  if (user.role === 'REVIEWER') {
-    return <Navigate to="/dashboard/reviewer" replace />
-  }
+
 
   return <Navigate to="/dashboard/user" replace />
 }
@@ -96,7 +94,7 @@ function App() {
               alignItems: { xs: 'stretch', md: 'center' },
             }}
           >
-            
+
 
             <Button
               component={Link}
@@ -108,7 +106,7 @@ function App() {
                 justifyContent: { xs: 'center', md: 'flex-start' },
                 gap: 1.2,
                 px: 1,
-                
+
                 minHeight: { xs: 42, md: 36 },
               }}
             >
@@ -135,7 +133,7 @@ function App() {
             >
               {isAuthenticated ? (
                 <>
-                  <Chip label={`${user?.pseudo} • ${user?.role}`} color="primary" variant="outlined" sx={{ maxWidth: { xs: '100%', md: 'none' } }} />
+                  
                   <Button
                     component={Link}
                     to="/les-histoires"
@@ -143,16 +141,18 @@ function App() {
                   >
                     Les Histoires
                   </Button>
-                  <Button
-                    component={Link}
-                    to="/dashboard"
-                    variant="outlined"
-                    startIcon={<DashboardCustomizeIcon />}
-                    size="small"
-                    sx={{ minWidth: { xs: 'calc(50% - 4px)', md: 0 } }}
-                  >
-                    Dashboard
-                  </Button>
+                  {user?.role === 'ADMIN' && (
+                    <Button
+                      component={Link}
+                      to="/dashboard/admin"
+                      variant="outlined"
+                      startIcon={<DashboardCustomizeIcon />}
+                      size="small"
+                      sx={{ minWidth: { xs: 'calc(50% - 4px)', md: 0 } }}
+                    >
+                      Tableau de bord
+                    </Button>
+                  )}
                   <Button
                     component={Link}
                     to="/leaderboard"
@@ -171,7 +171,7 @@ function App() {
                     size="small"
                     sx={{ minWidth: { xs: 'calc(50% - 4px)', md: 0 } }}
                   >
-                    Profil
+                    {`${user?.pseudo}` }
                   </Button>
                   <Button
                     component={Link}
@@ -191,7 +191,7 @@ function App() {
                     size="small"
                     sx={{ minWidth: { xs: 'calc(50% - 4px)', md: 0 } }}
                   >
-                    Logout
+                    Se déconnecter
                   </Button>
                 </>
               ) : (
@@ -212,7 +212,7 @@ function App() {
                     size="small"
                     sx={{ minWidth: { xs: 'calc(50% - 4px)', md: 0 } }}
                   >
-                    Login
+                    Se connecter
                   </Button>
                   <Button
                     component={Link}
@@ -223,7 +223,7 @@ function App() {
                     size="small"
                     sx={{ minWidth: { xs: 'calc(50% - 4px)', md: 0 } }}
                   >
-                    Register
+                    S'inscrire
                   </Button>
                 </>
               )}

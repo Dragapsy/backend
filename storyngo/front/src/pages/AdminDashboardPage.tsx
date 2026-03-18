@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Alert, Button, Chip, Paper, Stack, Typography } from '@mui/material'
+import { Alert, Box, Button, Chip, Paper, Stack, Typography } from '@mui/material'
 import {
   banUserPermanently,
   banUserTemporarily,
@@ -119,24 +119,13 @@ export function AdminDashboardPage() {
 
   return (
     <Stack spacing={3}>
-      <Paper
-        variant="outlined"
-        sx={{
-          p: { xs: 2.5, md: 4 },
-          borderRadius: 4,
-          
-        }}
-      >
-        <Typography variant="overline" color="error" fontWeight={700}>
-          Dashboard Admin
-        </Typography>
-        <Typography variant="h4" sx={{ mt: 0.8 }}>
-          Supervision utilisateurs
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 1.2 }}>
-          Vue globale des comptes, roles et niveaux d&apos;activite (sans donnees sensibles).
-        </Typography>
-      </Paper>
+
+      <Typography variant="h4" sx={{ mt: 0.8 }}>
+        Supervision utilisateurs
+      </Typography>
+      <Typography variant="body1" color="text.secondary" sx={{ mt: 1.2 }}>
+        Vue globale des comptes, roles et niveaux d&apos;activite (sans donnees sensibles).
+      </Typography>
 
       {error && <Alert severity="error">{error}</Alert>}
 
@@ -215,85 +204,92 @@ export function AdminDashboardPage() {
           ))}
         </Stack>
       )}
-
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 1 }}>
-        <Typography variant="h5" sx={{ mb: 1.5 }}>
-          Signalements priorises
-        </Typography>
-        {reports.length === 0 ? (
-          <Typography color="text.secondary">Aucun signalement ouvert.</Typography>
-        ) : (
-          <Stack spacing={1.2}>
-            {reports.map((report) => (
-              <Paper key={report.id} variant="outlined" sx={{ p: 2, borderRadius: 2.5 }}>
-                <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', md: 'center' }}>
-                  <Typography fontWeight={700} sx={{ flexGrow: 1 }}>
-                    Report #{report.id} • {report.type} #{report.targetId}
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 2,
+          gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
+        }}
+      >
+        <Paper variant="outlined" sx={{ p: 3, borderRadius: 1 }}>
+          <Typography variant="h5" sx={{ mb: 1.5 }}>
+            Signalements priorises
+          </Typography>
+          {reports.length === 0 ? (
+            <Typography color="text.secondary">Aucun signalement ouvert.</Typography>
+          ) : (
+            <Stack spacing={1.2}>
+              {reports.map((report) => (
+                <Paper key={report.id} variant="outlined" sx={{ p: 2, borderRadius: 2.5 }}>
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', md: 'center' }}>
+                    <Typography fontWeight={700} sx={{ flexGrow: 1 }}>
+                      Report #{report.id} • {report.type} #{report.targetId}
+                    </Typography>
+                    <Chip label={report.priority} color={report.priority === 'CRITICAL' || report.priority === 'HIGH' ? 'error' : 'warning'} size="small" />
+                    <Chip label={report.status} size="small" variant="outlined" />
+                  </Stack>
+                  <Typography sx={{ mt: 0.8 }}>{report.reason}</Typography>
+                  <Typography color="text.secondary" sx={{ mt: 0.5 }}>
+                    Reporter: {report.reporterPseudo} • {new Date(report.createdAt).toLocaleString()}
                   </Typography>
-                  <Chip label={report.priority} color={report.priority === 'CRITICAL' || report.priority === 'HIGH' ? 'error' : 'warning'} size="small" />
-                  <Chip label={report.status} size="small" variant="outlined" />
-                </Stack>
-                <Typography sx={{ mt: 0.8 }}>{report.reason}</Typography>
-                <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-                  Reporter: {report.reporterPseudo} • {new Date(report.createdAt).toLocaleString()}
-                </Typography>
-                <Stack direction="row" spacing={1} sx={{ mt: 1.2, flexWrap: 'wrap' }}>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={() => void handleReportStatus(report, 'IN_REVIEW')}
-                    disabled={updatingReportId === report.id}
-                  >
-                    En review
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    color="success"
-                    onClick={() => void handleReportStatus(report, 'RESOLVED')}
-                    disabled={updatingReportId === report.id}
-                  >
-                    Resolu
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    color="secondary"
-                    onClick={() => void handleReportStatus(report, 'REJECTED')}
-                    disabled={updatingReportId === report.id}
-                  >
-                    Rejeter
-                  </Button>
-                </Stack>
-              </Paper>
-            ))}
-          </Stack>
-        )}
-      </Paper>
+                  <Stack direction="row" spacing={1} sx={{ mt: 1.2, flexWrap: 'wrap' }}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => void handleReportStatus(report, 'IN_REVIEW')}
+                      disabled={updatingReportId === report.id}
+                    >
+                      En review
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      color="success"
+                      onClick={() => void handleReportStatus(report, 'RESOLVED')}
+                      disabled={updatingReportId === report.id}
+                    >
+                      Resolu
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="secondary"
+                      onClick={() => void handleReportStatus(report, 'REJECTED')}
+                      disabled={updatingReportId === report.id}
+                    >
+                      Rejeter
+                    </Button>
+                  </Stack>
+                </Paper>
+              ))}
+            </Stack>
+          )}
+        </Paper>
 
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 1 }}>
-        <Typography variant="h5" sx={{ mb: 1.5 }}>
-          Journal d&apos;audit admin
-        </Typography>
-        {auditLogs.length === 0 ? (
-          <Typography color="text.secondary">Aucune action admin journalisee.</Typography>
-        ) : (
-          <Stack spacing={1}>
-            {auditLogs.slice(0, 20).map((log) => (
-              <Paper key={log.id} variant="outlined" sx={{ p: 1.6, borderRadius: 2 }}>
-                <Typography fontWeight={700}>{log.action}</Typography>
-                <Typography color="text.secondary">
-                  Admin: {log.adminPseudo} • Cible: {log.targetType} #{log.targetId}
-                </Typography>
-                {log.details && <Typography sx={{ mt: 0.4 }}>{log.details}</Typography>}
-                <Typography color="text.secondary" sx={{ mt: 0.4 }}>
-                  {new Date(log.createdAt).toLocaleString()}
-                </Typography>
-              </Paper>
-            ))}
-          </Stack>
-        )}
-      </Paper>
+        <Paper variant="outlined" sx={{ p: 3, borderRadius: 1 }}>
+          <Typography variant="h5" sx={{ mb: 1.5 }}>
+            Journal d'Audit administratif
+          </Typography>
+          {auditLogs.length === 0 ? (
+            <Typography color="text.secondary">Aucune action admin journalisee.</Typography>
+          ) : (
+            <Stack spacing={1}>
+              {auditLogs.slice(0, 20).map((log) => (
+                <Paper key={log.id} variant="outlined" sx={{ p: 1.6, borderRadius: 2 }}>
+                  <Typography fontWeight={700}>{log.action}</Typography>
+                  <Typography color="text.secondary">
+                    Admin: {log.adminPseudo} • Cible: {log.targetType} #{log.targetId}
+                  </Typography>
+                  {log.details && <Typography sx={{ mt: 0.4 }}>{log.details}</Typography>}
+                  <Typography color="text.secondary" sx={{ mt: 0.4 }}>
+                    {new Date(log.createdAt).toLocaleString()}
+                  </Typography>
+                </Paper>
+              ))}
+            </Stack>
+          )}
+        </Paper>
+      </Box>
     </Stack>
   )
 }
