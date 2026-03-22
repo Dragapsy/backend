@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.storyngo.services.GamificationService;
 
 @ExtendWith(MockitoExtension.class)
 class CommentServiceTests {
@@ -33,11 +34,14 @@ class CommentServiceTests {
     @Mock
     private ChapterRepository chapterRepository;
 
+    @Mock
+    private GamificationService gamificationService;
+
     private CommentService commentService;
 
     @BeforeEach
     void setUp() {
-        commentService = new CommentService(commentRepository, chapterRepository, new ModerationService());
+        commentService = new CommentService(commentRepository, chapterRepository, new ModerationService(), gamificationService);
     }
 
     @Test

@@ -75,6 +75,7 @@ export interface UserDTO {
 export interface ReviewerDashboardDTO {
   pendingStories: StoryDTO[]
   validatedStories: StoryDTO[]
+  flaggedReports: AdminReportDTO[]
 }
 
 export interface AdminUserOverviewDTO {

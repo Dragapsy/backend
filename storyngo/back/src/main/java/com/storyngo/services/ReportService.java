@@ -68,7 +68,7 @@ public class ReportService {
 
     @Transactional(readOnly = true)
     public List<AdminReportDTO> getOpenReports(User user) {
-        ensureAdmin(user);
+        ensureAdminOrReviewer(user);
         return reportRepository.findByStatusOrderByPriorityDescCreatedAtAsc(ReportStatus.OPEN)
             .stream()
             .map(this::toDto)
@@ -131,6 +131,15 @@ public class ReportService {
         }
         if (user.getRole() != UserRole.ADMIN) {
             throw new ForbiddenOperationException("Admin role is required.");
+        }
+    }
+
+    private void ensureAdminOrReviewer(User user) {
+        if (user == null) {
+            throw new UnauthorizedException("Authenticated user is required.");
+        }
+        if (user.getRole() != UserRole.ADMIN && user.getRole() != UserRole.REVIEWER) {
+            throw new ForbiddenOperationException("Admin or Reviewer role is required.");
         }
     }
 

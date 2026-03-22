@@ -132,7 +132,9 @@ public class RoleDashboardService {
             .map(storyMapper::toDto)
             .toList();
 
-        return new ReviewerDashboardDTO(pending, validated);
+        List<AdminReportDTO> flagged = reportService.getOpenReports(authenticated);
+
+        return new ReviewerDashboardDTO(pending, validated, flagged);
     }
 
     @Transactional

@@ -1,36 +1,50 @@
 import { useEffect, useState } from 'react'
 import { Alert, Box, Button, Chip, Paper, Stack, Typography } from '@mui/material'
+import { Link } from 'react-router-dom'
 import {
+  approveStoryReview,
   banUserPermanently,
   banUserTemporarily,
   getAdminAuditLogs,
   getAdminUsers,
   getOpenReports,
+  getReviewerDashboard,
   quickUpdateReportStatus,
+  rejectStoryReview,
   unbanUser,
 } from '../api/storyApi'
 import { getApiErrorMessage } from '../api/apiClient'
 import { EmptyState } from '../components/EmptyState'
 import { LoadingState } from '../components/LoadingState'
-import type { AdminAuditLogDTO, AdminReportDTO, AdminUserOverviewDTO } from '../types'
+import { SectionTitle } from '../components/SectionTitle'
+import { StoryCard } from '../components/StoryCard'
+import type { AdminAuditLogDTO, AdminReportDTO, AdminUserOverviewDTO, StoryDTO } from '../types'
 
 export function AdminDashboardPage() {
   const [users, setUsers] = useState<AdminUserOverviewDTO[]>([])
   const [reports, setReports] = useState<AdminReportDTO[]>([])
   const [auditLogs, setAuditLogs] = useState<AdminAuditLogDTO[]>([])
+  const [pendingStories, setPendingStories] = useState<StoryDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [updatingUserId, setUpdatingUserId] = useState<number | null>(null)
   const [updatingReportId, setUpdatingReportId] = useState<number | null>(null)
+  const [updatingStoryId, setUpdatingStoryId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   async function loadDashboard() {
     setLoading(true)
     setError(null)
     try {
-      const [usersData, reportsData, logsData] = await Promise.all([getAdminUsers(), getOpenReports(), getAdminAuditLogs()])
+      const [usersData, reportsData, logsData, reviewerData] = await Promise.all([
+        getAdminUsers(),
+        getOpenReports(),
+        getAdminAuditLogs(),
+        getReviewerDashboard(),
+      ])
       setUsers(usersData)
       setReports(reportsData)
       setAuditLogs(logsData)
+      setPendingStories(reviewerData.pendingStories)
     } catch {
       setError('Impossible de charger la vue admin.')
     } finally {
@@ -95,6 +109,30 @@ export function AdminDashboardPage() {
       setError(getApiErrorMessage(err, 'Deban impossible.'))
     } finally {
       setUpdatingUserId(null)
+    }
+  }
+
+  async function handleApprove(storyId: number) {
+    setUpdatingStoryId(storyId)
+    try {
+      await approveStoryReview(storyId)
+      await loadDashboard()
+    } catch {
+      setError('Validation impossible pour le moment.')
+    } finally {
+      setUpdatingStoryId(null)
+    }
+  }
+
+  async function handleReject(storyId: number) {
+    setUpdatingStoryId(storyId)
+    try {
+      await rejectStoryReview(storyId)
+      await loadDashboard()
+    } catch {
+      setError('Rejet impossible pour le moment.')
+    } finally {
+      setUpdatingStoryId(null)
     }
   }
 

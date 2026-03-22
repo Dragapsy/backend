@@ -71,7 +71,9 @@ function DashboardRedirect() {
     return <Navigate to="/dashboard/admin" replace />
   }
 
-
+  if (user.role === 'REVIEWER') {
+    return <Navigate to="/dashboard/reviewer" replace />
+  }
 
   return <Navigate to="/dashboard/user" replace />
 }
@@ -141,10 +143,10 @@ function App() {
                   >
                     Les Histoires
                   </Button>
-                  {user?.role === 'ADMIN' && (
+                  {(user?.role === 'ADMIN' || user?.role === 'REVIEWER') && (
                     <Button
                       component={Link}
-                      to="/dashboard/admin"
+                      to={user.role === 'ADMIN' ? '/dashboard/admin' : '/dashboard/reviewer'}
                       variant="outlined"
                       startIcon={<DashboardCustomizeIcon />}
                       size="small"

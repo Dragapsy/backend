@@ -6,11 +6,12 @@ import { EmptyState } from '../components/EmptyState'
 import { LoadingState } from '../components/LoadingState'
 import { SectionTitle } from '../components/SectionTitle'
 import { StoryCard } from '../components/StoryCard'
-import type { StoryDTO } from '../types'
+import type { AdminReportDTO, StoryDTO } from '../types'
 
 export function ReviewerDashboardPage() {
   const [pendingStories, setPendingStories] = useState<StoryDTO[]>([])
   const [validatedStories, setValidatedStories] = useState<StoryDTO[]>([])
+  const [flaggedReports, setFlaggedReports] = useState<AdminReportDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<number | null>(null)
@@ -22,6 +23,7 @@ export function ReviewerDashboardPage() {
       const data = await getReviewerDashboard()
       setPendingStories(data.pendingStories)
       setValidatedStories(data.validatedStories)
+      setFlaggedReports(data.flaggedReports)
     } catch {
       setError('Impossible de charger la vue reviewer.')
     } finally {
@@ -142,6 +144,51 @@ export function ReviewerDashboardPage() {
               <StoryCard key={story.id} story={story} />
             ))}
           </Box>
+        )}
+      </section>
+
+      <section>
+        <SectionTitle title="Signalements ouverts" subtitle="Contenus signales par les utilisateurs" />
+        {flaggedReports.length === 0 ? (
+          <EmptyState
+            title="Aucun signalement ouvert"
+            description="Aucun contenu signale pour le moment."
+            actionLabel="Actualiser"
+            onAction={() => void loadDashboard()}
+          />
+        ) : (
+          <Stack spacing={1.5}>
+            {flaggedReports.map((report) => (
+              <Paper key={report.id} variant="outlined" sx={{ p: 2, borderRadius: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+                  <Box>
+                    <Typography variant="body2" fontWeight={600}>
+                      {report.type} #{report.targetId}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {report.reason}
+                    </Typography>
+                    <Typography variant="caption" color="text.disabled">
+                      Signale par {report.reporterPseudo} · Priorite : {report.priority}
+                    </Typography>
+                  </Box>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      px: 1,
+                      py: 0.3,
+                      borderRadius: 1,
+                      bgcolor: report.priority === 'CRITICAL' ? 'error.light' : report.priority === 'HIGH' ? 'warning.light' : 'grey.200',
+                      color: report.priority === 'CRITICAL' ? 'error.contrastText' : 'text.primary',
+                      alignSelf: 'flex-start',
+                    }}
+                  >
+                    {report.status}
+                  </Typography>
+                </Box>
+              </Paper>
+            ))}
+          </Stack>
         )}
       </section>
     </Stack>
