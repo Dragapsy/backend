@@ -167,6 +167,50 @@ export function AdminDashboardPage() {
 
       {error && <Alert severity="error">{error}</Alert>}
 
+      <section>
+        <SectionTitle title="Histoires a valider" subtitle="Stories en attente de review" />
+        {pendingStories.length === 0 ? (
+          <EmptyState
+            title="Aucune histoire en attente"
+            description="La file de moderation est vide."
+            actionLabel="Actualiser"
+            onAction={() => void loadDashboard()}
+          />
+        ) : (
+          <Stack spacing={2}>
+            {pendingStories.map((story) => (
+              <Paper key={story.id} variant="outlined" sx={{ p: 2.2, borderRadius: 1 }}>
+                <Box sx={{ display: 'grid', gap: 1.6 }}>
+                  <StoryCard story={story} />
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      onClick={() => void handleApprove(story.id)}
+                      disabled={updatingStoryId === story.id}
+                    >
+                      Approuver
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="secondary"
+                      onClick={() => void handleReject(story.id)}
+                      disabled={updatingStoryId === story.id}
+                    >
+                      Rejeter
+                    </Button>
+                    <Button size="small" component={Link} to={`/stories/${story.id}`}>
+                      Ouvrir le detail
+                    </Button>
+                  </Box>
+                </Box>
+              </Paper>
+            ))}
+          </Stack>
+        )}
+      </section>
+
       {users.length === 0 ? (
         <EmptyState
           title="Aucun utilisateur"
