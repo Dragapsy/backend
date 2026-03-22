@@ -16,7 +16,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link as RouterLink, useParams } from 'react-router-dom'
 import { getApiErrorMessage } from '../api/apiClient'
 import {
@@ -121,6 +121,8 @@ export function StoryDetailPage() {
   const canAddChapter = Boolean(
     isAuthenticated && storyDetails?.story.authorName && user?.pseudo === storyDetails.story.authorName,
   )
+  const hasLockedChapters = Boolean(storyDetails?.chapters.some((chapter) => !chapter.unlocked))
+  const lockedChapterCount = storyDetails?.chapters.filter((chapter) => !chapter.unlocked).length ?? 0
 
   const currentStatus = storyDetails?.story.status
 
@@ -138,6 +140,37 @@ export function StoryDetailPage() {
   const canSubmitReview = Boolean(isAuthor && currentStatus === 'DRAFT')
   const canReviewStory = Boolean(isAuthenticated && !isAuthor && currentStatus === 'IN_REVIEW')
   const canArchiveStory = Boolean(isAuthenticated && currentStatus === 'PUBLISHED')
+  const canCreateNextChapter = Boolean(canAddChapter && currentStatus === 'DRAFT' && !hasLockedChapters)
+
+  const loadStory = useCallback(async () => {
+    if (!id) {
+      setError('Identifiant de story invalide.')
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const storyId = Number(id)
+      const details = await getStoryDetails(storyId)
+      setStoryDetails(details)
+      void refreshQualityScore(storyId)
+      if (details.chapters.length > 0) {
+        const firstChapterId = details.chapters[0].id
+        setSelectedChapterId(firstChapterId)
+        await loadComments(firstChapterId)
+      } else {
+        setSelectedChapterId(null)
+        setComments([])
+      }
+    } catch {
+      setError('Impossible de charger cette story.')
+    } finally {
+      setLoading(false)
+    }
+  }, [id])
 
   async function refreshQualityScore(storyId: number) {
     setLoadingQuality(true)
@@ -167,35 +200,8 @@ export function StoryDetailPage() {
   }
 
   useEffect(() => {
-    async function loadStory() {
-      if (!id) {
-        setError('Identifiant de story invalide.')
-        setLoading(false)
-        return
-      }
-
-      setLoading(true)
-      setError(null)
-
-      try {
-        const storyId = Number(id)
-        const details = await getStoryDetails(storyId)
-        setStoryDetails(details)
-        void refreshQualityScore(storyId)
-        if (details.chapters.length > 0) {
-          const firstChapterId = details.chapters[0].id
-          setSelectedChapterId(firstChapterId)
-          await loadComments(firstChapterId)
-        }
-      } catch {
-        setError('Impossible de charger cette story.')
-      } finally {
-        setLoading(false)
-      }
-    }
-
     void loadStory()
-  }, [id])
+  }, [loadStory])
 
   async function handleChapterSelection(chapterId: number) {
     setSelectedChapterId(chapterId)
@@ -693,7 +699,26 @@ export function StoryDetailPage() {
         )}
       </Paper>
 
-      {canAddChapter && currentStatus === 'DRAFT' && (
+      {canAddChapter && currentStatus === 'DRAFT' && hasLockedChapters && (
+        <Paper variant="outlined" sx={{ p: { xs: 2, sm: 2.5 } }}>
+          <Typography variant="h5">Prochain chapitre verrouille</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Vous pourrez ajouter un nouveau chapitre quand tous les chapitres precedents seront debloques.
+            {lockedChapterCount > 0 ? ` Il reste ${lockedChapterCount} chapitre(s) a valider.` : ''}
+          </Typography>
+          <Button
+            variant="outlined"
+            sx={{ mt: 2, width: { xs: '100%', sm: 'fit-content' } }}
+            onClick={() => {
+              void loadStory()
+            }}
+          >
+            Actualiser l'etat des votes
+          </Button>
+        </Paper>
+      )}
+
+      {canCreateNextChapter && (
         <Paper variant="outlined" sx={{ p: { xs: 2, sm: 2.5 } }}>
           <Typography variant="h5">Ajouter un chapitre</Typography>
 

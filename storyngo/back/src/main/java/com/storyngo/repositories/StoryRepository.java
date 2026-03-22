@@ -14,6 +14,10 @@ public interface StoryRepository extends JpaRepository<Story, Long> {
 
     List<Story> findByAuthorIdInOrderByCreatedAtDesc(List<Long> authorIds);
 
+    List<Story> findByAuthorIdOrderByCreatedAtDesc(Long authorId);
+
+    List<Story> findByAuthorIdAndStatusOrderByCreatedAtDesc(Long authorId, StoryStatus status);
+
     List<Story> findByAuthorIdInAndStatusOrderByCreatedAtDesc(List<Long> authorIds, StoryStatus status);
 
     long countByAuthorId(Long authorId);

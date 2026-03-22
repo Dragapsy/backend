@@ -62,18 +62,17 @@ public class StoryService {
     private final GamificationService gamificationService;
 
     public StoryService(
-        StoryRepository storyRepository,
-        ChapterRepository chapterRepository,
-        ChapterVersionRepository chapterVersionRepository,
-        VoteRepository voteRepository,
-        CommentRepository commentRepository,
-        UserRepository userRepository,
-        StoryMapper storyMapper,
-        ChapterMapper chapterMapper,
-        ModerationService moderationService,
-        StoryPermissionService storyPermissionService,
-        GamificationService gamificationService
-    ) {
+            StoryRepository storyRepository,
+            ChapterRepository chapterRepository,
+            ChapterVersionRepository chapterVersionRepository,
+            VoteRepository voteRepository,
+            CommentRepository commentRepository,
+            UserRepository userRepository,
+            StoryMapper storyMapper,
+            ChapterMapper chapterMapper,
+            ModerationService moderationService,
+            StoryPermissionService storyPermissionService,
+            GamificationService gamificationService) {
         this.storyRepository = storyRepository;
         this.chapterRepository = chapterRepository;
         this.chapterVersionRepository = chapterVersionRepository;
@@ -90,27 +89,27 @@ public class StoryService {
     @Transactional(readOnly = true)
     public List<StoryDTO> getStories() {
         return storyRepository.findByStatusOrderByCreatedAtDesc(StoryStatus.PUBLISHED)
-            .stream()
-            .map(storyMapper::toDto)
-            .toList();
+                .stream()
+                .map(storyMapper::toDto)
+                .toList();
     }
 
     @Transactional(readOnly = true)
     public StoryDetailsDTO getStoryDetails(Long id) {
         Story story = storyRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
 
         List<Chapter> orderedChapters = chapterRepository.findByStoryIdOrderByOrderIndexAsc(id);
         validateChapterOrderIntegrity(orderedChapters);
 
         List<ChapterDTO> chapters = orderedChapters
-            .stream()
-            .map(chapter -> {
-                long voteCount = voteRepository.countByChapterId(chapter.getId());
-                boolean isUnlocked = voteCount >= chapter.getVoteThreshold();
-                return chapterMapper.toDto(chapter, voteCount, isUnlocked);
-            })
-            .toList();
+                .stream()
+                .map(chapter -> {
+                    long voteCount = voteRepository.countByChapterId(chapter.getId());
+                    boolean isUnlocked = voteCount >= chapter.getVoteThreshold();
+                    return chapterMapper.toDto(chapter, voteCount, isUnlocked);
+                })
+                .toList();
 
         return new StoryDetailsDTO(storyMapper.toDto(story), chapters);
     }
@@ -122,14 +121,14 @@ public class StoryService {
         }
 
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found."));
         Chapter chapter = chapterRepository.findById(chapterId)
-            .orElseThrow(() -> new ResourceNotFoundException("Chapter not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Chapter not found."));
 
         Vote vote = Vote.builder()
-            .user(user)
-            .chapter(chapter)
-            .build();
+                .user(user)
+                .chapter(chapter)
+                .build();
 
         voteRepository.save(vote);
         gamificationService.awardXp(user, "VOTE_CHAPTER", 3, "CHAPTER", chapterId);
@@ -141,21 +140,21 @@ public class StoryService {
     @Transactional(readOnly = true)
     public List<StoryDTO> getTrendingStories() {
         return storyRepository.findTrendingStoriesByStatus(StoryStatus.PUBLISHED)
-            .stream()
-            .map(storyMapper::toDto)
-            .toList();
+                .stream()
+                .map(storyMapper::toDto)
+                .toList();
     }
 
     @Transactional(readOnly = true)
     public List<ChapterDTO> getUpcomingChapters() {
         return chapterRepository.findChaptersNearVoteThreshold()
-            .stream()
-            .map(chapter -> {
-                long voteCount = voteRepository.countByChapterId(chapter.getId());
-                boolean isUnlocked = voteCount >= chapter.getVoteThreshold();
-                return chapterMapper.toDto(chapter, voteCount, isUnlocked);
-            })
-            .toList();
+                .stream()
+                .map(chapter -> {
+                    long voteCount = voteRepository.countByChapterId(chapter.getId());
+                    boolean isUnlocked = voteCount >= chapter.getVoteThreshold();
+                    return chapterMapper.toDto(chapter, voteCount, isUnlocked);
+                })
+                .toList();
     }
 
     @Transactional
@@ -168,23 +167,23 @@ public class StoryService {
         moderationService.validateContent(request.content());
 
         Story story = Story.builder()
-            .title(request.title())
-            .summary(request.summary())
-            .author(author)
-            .createdAt(java.time.LocalDateTime.now())
-            .build();
+                .title(request.title())
+                .summary(request.summary())
+                .author(author)
+                .createdAt(java.time.LocalDateTime.now())
+                .build();
 
         Story savedStory = storyRepository.save(story);
 
         Chapter chapter = Chapter.builder()
-            .story(savedStory)
-            .content(request.content())
-            .orderIndex(1)
-            .isAnonymous(request.isAnonymous())
-            .voteThreshold(FIRST_CHAPTER_VOTE_THRESHOLD)
-            .charLimit(FIRST_CHAPTER_CHAR_LIMIT)
-            .createdAt(java.time.LocalDateTime.now())
-            .build();
+                .story(savedStory)
+                .content(request.content())
+                .orderIndex(1)
+                .isAnonymous(request.isAnonymous())
+                .voteThreshold(FIRST_CHAPTER_VOTE_THRESHOLD)
+                .charLimit(FIRST_CHAPTER_CHAR_LIMIT)
+                .createdAt(java.time.LocalDateTime.now())
+                .build();
 
         enforceCharLimit(chapter.getContent(), chapter.getCharLimit());
         Chapter savedChapter = chapterRepository.save(chapter);
@@ -206,7 +205,7 @@ public class StoryService {
         moderationService.validateContent(request.content());
 
         Story story = storyRepository.findById(storyId)
-            .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
 
         storyPermissionService.assertCan(author, story, ADD_CHAPTER);
 
@@ -217,7 +216,7 @@ public class StoryService {
         validateChapterOrderIntegrity(orderedChapters);
 
         boolean hasLockedChapter = orderedChapters.stream()
-            .anyMatch(chapter -> voteRepository.countByChapterId(chapter.getId()) < chapter.getVoteThreshold());
+                .anyMatch(chapter -> voteRepository.countByChapterId(chapter.getId()) < chapter.getVoteThreshold());
         if (hasLockedChapter) {
             throw new ConflictException("All previous chapters must be unlocked.");
         }
@@ -231,14 +230,14 @@ public class StoryService {
         enforceCharLimit(request.content(), nextCharLimit);
 
         Chapter chapter = Chapter.builder()
-            .story(story)
-            .content(request.content())
-            .orderIndex(nextOrder)
-            .isAnonymous(request.isAnonymous())
-            .voteThreshold(nextThreshold)
-            .charLimit(nextCharLimit)
-            .createdAt(java.time.LocalDateTime.now())
-            .build();
+                .story(story)
+                .content(request.content())
+                .orderIndex(nextOrder)
+                .isAnonymous(request.isAnonymous())
+                .voteThreshold(nextThreshold)
+                .charLimit(nextCharLimit)
+                .createdAt(java.time.LocalDateTime.now())
+                .build();
 
         Chapter saved = chapterRepository.save(chapter);
         createVersionSnapshot(saved);
@@ -254,7 +253,7 @@ public class StoryService {
         moderationService.validateContent(request.content());
 
         Chapter chapter = chapterRepository.findById(chapterId)
-            .orElseThrow(() -> new ResourceNotFoundException("Chapter not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Chapter not found."));
         Story story = chapter.getStory();
 
         storyPermissionService.assertCan(user, story, EDIT_CHAPTER);
@@ -277,7 +276,7 @@ public class StoryService {
     @Transactional(readOnly = true)
     public List<ChapterVersionDTO> getChapterVersions(Long chapterId) {
         chapterRepository.findById(chapterId)
-            .orElseThrow(() -> new ResourceNotFoundException("Chapter not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Chapter not found."));
 
         return chapterVersionRepository.findByChapterIdOrderByVersionNumberDesc(chapterId)
             .stream()
@@ -298,13 +297,13 @@ public class StoryService {
         }
 
         Chapter chapter = chapterRepository.findById(chapterId)
-            .orElseThrow(() -> new ResourceNotFoundException("Chapter not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Chapter not found."));
         Story story = chapter.getStory();
 
         storyPermissionService.assertCan(user, story, RESTORE_CHAPTER_VERSION);
 
         ChapterVersion version = chapterVersionRepository.findByIdAndChapterId(versionId, chapterId)
-            .orElseThrow(() -> new ResourceNotFoundException("Chapter version not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Chapter version not found."));
 
         chapter.setContent(version.getContent());
         Chapter savedChapter = chapterRepository.save(chapter);
@@ -322,7 +321,7 @@ public class StoryService {
         }
 
         Story story = storyRepository.findById(storyId)
-            .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
 
         storyPermissionService.assertCan(user, story, SUBMIT_FOR_REVIEW);
 
@@ -339,7 +338,7 @@ public class StoryService {
         }
 
         Story story = storyRepository.findById(storyId)
-            .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
 
         storyPermissionService.assertCan(user, story, APPROVE_REVIEW);
 
@@ -382,6 +381,18 @@ public class StoryService {
         gamificationService.awardXp(user, "ARCHIVE_STORY", 5, "STORY", saved.getId());
         return storyMapper.toDto(saved);
     }
+    
+    @Transactional(readOnly = true)
+    public List<StoryDTO> getStoriesByAuthor(User user) {
+        if (user == null) {
+            throw new UnauthorizedException("Authenticated user is required.");
+        }
+
+        return storyRepository.findByAuthorIdOrderByCreatedAtDesc(user.getId())
+                .stream()
+                .map(storyMapper::toDto)
+                .toList();
+    }
 
     @Transactional(readOnly = true)
     public StoryQualityScoreDTO getStoryQualityScore(Long storyId) {
@@ -405,16 +416,15 @@ public class StoryService {
         int totalScore = Math.min(100, completenessScore + statusScore + engagementScore);
 
         return new StoryQualityScoreDTO(
-            story.getId(),
-            story.getStatus(),
-            totalScore,
-            completenessScore,
-            statusScore,
-            engagementScore,
-            chapterCount,
-            voteCount,
-            commentCount
-        );
+                story.getId(),
+                story.getStatus(),
+                totalScore,
+                completenessScore,
+                statusScore,
+                engagementScore,
+                chapterCount,
+                voteCount,
+                commentCount);
     }
 
     private void enforceCharLimit(String content, int charLimit) {
@@ -426,11 +436,11 @@ public class StoryService {
     private void createVersionSnapshot(Chapter chapter) {
         int nextVersion = (int) chapterVersionRepository.countByChapterId(chapter.getId()) + 1;
         ChapterVersion snapshot = ChapterVersion.builder()
-            .chapter(chapter)
-            .versionNumber(nextVersion)
-            .content(chapter.getContent())
-            .createdAt(java.time.LocalDateTime.now())
-            .build();
+                .chapter(chapter)
+                .versionNumber(nextVersion)
+                .content(chapter.getContent())
+                .createdAt(java.time.LocalDateTime.now())
+                .build();
         chapterVersionRepository.save(snapshot);
     }
 
@@ -439,7 +449,8 @@ public class StoryService {
             int expected = i + 1;
             Integer actual = orderedChapters.get(i).getOrderIndex();
             if (actual == null || actual != expected) {
-                throw new ConflictException("Chapter order is inconsistent. Expected chapter order index " + expected + ".");
+                throw new ConflictException(
+                        "Chapter order is inconsistent. Expected chapter order index " + expected + ".");
             }
         }
     }

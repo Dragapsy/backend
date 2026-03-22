@@ -212,3 +212,8 @@ export async function archiveStory(storyId: number): Promise<StoryDTO> {
   const response = await apiClient.post<StoryDTO>(`/stories/${storyId}/archive`)
   return response.data
 }
+
+export async function getMyStories(): Promise<StoryDTO[]> {
+  const response = await apiClient.get<StoryDTO[]>('/stories/me')
+  return response.data
+}

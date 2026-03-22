@@ -7,6 +7,7 @@ import {
   getPersonalizedFeed,
   getWeeklyLeaderboard,
   getXpHistory,
+  getMyStories,
   unfollowUser,
   updateCurrentUserProfile,
 } from '../api/storyApi'
@@ -33,7 +34,7 @@ export function UserDashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [editMode, setEditMode] = useState(false)
-
+  const [archivedStories, setArchivedStories] = useState<StoryDTO[]>([])
   useEffect(() => {
     async function loadProfile() {
       setLoading(true)
@@ -53,6 +54,13 @@ export function UserDashboardPage() {
         setFeed(personalizedFeed)
         const xpEvents = await getXpHistory(20)
         setXpHistory(xpEvents)
+        const myStories = await getMyStories()
+
+        const archived = myStories.filter(
+          (story) => story.status === 'ARCHIVED'
+        )
+
+        setArchivedStories(archived)
       } catch {
         setError('Impossible de charger votre profil pour le moment.')
       } finally {
@@ -64,19 +72,19 @@ export function UserDashboardPage() {
   }, [])
 
   function getXpActionLabel(event: UserXpEventDTO) {
-  switch (event.action) {
-    case 'CREATE_STORY':
-      return `Création d'une histoire`;
-    case 'CREATE_CHAPTER':
-      return `Création d'un chapitre`;
-    case 'VOTE_CHAPTER':
-      return `Vote sur un chapitre`;
-    case 'SUBMIT_REVIEW':
-      return `Ecrire un commentaire`;
-    default:
-      return event.action; // fallback si l’action est inconnue
+    switch (event.action) {
+      case 'CREATE_STORY':
+        return `Création d'une histoire`;
+      case 'CREATE_CHAPTER':
+        return `Création d'un chapitre`;
+      case 'VOTE_CHAPTER':
+        return `Vote sur un chapitre`;
+      case 'SUBMIT_REVIEW':
+        return `Ecrire un commentaire`;
+      default:
+        return event.action; // fallback si l’action est inconnue
+    }
   }
-}
 
   async function handleSaveProfile() {
     setSaving(true)
@@ -448,7 +456,7 @@ export function UserDashboardPage() {
                 sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.8, borderBottom: '1px dashed', borderColor: 'divider' }}
               >
                 <Stack spacing={0.2}>
-                  
+
                   <Typography>{getXpActionLabel(event)}</Typography>
                   <Typography variant="caption" color="text.secondary">
                     {new Date(event.createdAt).toLocaleString()} • {event.referenceType}
@@ -461,6 +469,29 @@ export function UserDashboardPage() {
               </Box>
             ))}
           </Stack>
+        )}
+      </Paper>
+      <Paper variant="outlined" sx={{ p: 3, borderRadius: 1 }}>
+        <Typography variant="h6" sx={{ mb: 1.5 }}>
+          Mes histoires archivées
+        </Typography>
+
+        {archivedStories.length === 0 ? (
+          <Typography color="text.secondary">
+            Vous n'avez aucune histoire archivée.
+          </Typography>
+        ) : (
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 2,
+              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            }}
+          >
+            {archivedStories.map((story) => (
+              <StoryCard key={story.id} story={story} />
+            ))}
+          </Box>
         )}
       </Paper>
     </Stack>
