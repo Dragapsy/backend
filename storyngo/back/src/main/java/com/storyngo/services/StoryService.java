@@ -7,6 +7,7 @@ import com.storyngo.dto.ChapterVersionDTO;
 import com.storyngo.dto.StoryCreateRequest;
 import com.storyngo.dto.StoryDTO;
 import com.storyngo.dto.StoryDetailsDTO;
+import com.storyngo.dto.StoryLikesDTO;
 import com.storyngo.dto.StoryQualityScoreDTO;
 import com.storyngo.exceptions.ConflictException;
 import com.storyngo.exceptions.ResourceNotFoundException;
@@ -16,12 +17,14 @@ import com.storyngo.mappers.StoryMapper;
 import com.storyngo.models.Chapter;
 import com.storyngo.models.ChapterVersion;
 import com.storyngo.models.Story;
+import com.storyngo.models.StoryLike;
 import com.storyngo.models.StoryStatus;
 import com.storyngo.models.User;
 import com.storyngo.models.Vote;
 import com.storyngo.repositories.ChapterRepository;
 import com.storyngo.repositories.ChapterVersionRepository;
 import com.storyngo.repositories.CommentRepository;
+import com.storyngo.repositories.StoryLikeRepository;
 import com.storyngo.repositories.StoryRepository;
 import com.storyngo.repositories.UserRepository;
 import com.storyngo.repositories.VoteRepository;
@@ -60,6 +63,7 @@ public class StoryService {
     private final ModerationService moderationService;
     private final StoryPermissionService storyPermissionService;
     private final GamificationService gamificationService;
+    private final StoryLikeRepository storyLikeRepository;
 
     public StoryService(
             StoryRepository storyRepository,
@@ -68,6 +72,7 @@ public class StoryService {
             VoteRepository voteRepository,
             CommentRepository commentRepository,
             UserRepository userRepository,
+            StoryLikeRepository storyLikeRepository,
             StoryMapper storyMapper,
             ChapterMapper chapterMapper,
             ModerationService moderationService,
@@ -79,6 +84,7 @@ public class StoryService {
         this.voteRepository = voteRepository;
         this.commentRepository = commentRepository;
         this.userRepository = userRepository;
+        this.storyLikeRepository = storyLikeRepository;
         this.storyMapper = storyMapper;
         this.chapterMapper = chapterMapper;
         this.moderationService = moderationService;
@@ -279,15 +285,14 @@ public class StoryService {
                 .orElseThrow(() -> new ResourceNotFoundException("Chapter not found."));
 
         return chapterVersionRepository.findByChapterIdOrderByVersionNumberDesc(chapterId)
-            .stream()
-            .map(version -> new ChapterVersionDTO(
-                version.getId(),
-                version.getChapter().getId(),
-                version.getVersionNumber(),
-                version.getContent(),
-                version.getCreatedAt()
-            ))
-            .toList();
+                .stream()
+                .map(version -> new ChapterVersionDTO(
+                        version.getId(),
+                        version.getChapter().getId(),
+                        version.getVersionNumber(),
+                        version.getContent(),
+                        version.getCreatedAt()))
+                .toList();
     }
 
     @Transactional
@@ -355,7 +360,7 @@ public class StoryService {
         }
 
         Story story = storyRepository.findById(storyId)
-            .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
 
         storyPermissionService.assertCan(user, story, REJECT_REVIEW);
 
@@ -372,7 +377,7 @@ public class StoryService {
         }
 
         Story story = storyRepository.findById(storyId)
-            .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
 
         storyPermissionService.assertCan(user, story, ARCHIVE);
 
@@ -381,7 +386,7 @@ public class StoryService {
         gamificationService.awardXp(user, "ARCHIVE_STORY", 5, "STORY", saved.getId());
         return storyMapper.toDto(saved);
     }
-    
+
     @Transactional(readOnly = true)
     public List<StoryDTO> getStoriesByAuthor(User user) {
         if (user == null) {
@@ -394,10 +399,67 @@ public class StoryService {
                 .toList();
     }
 
+    @Transactional
+    public void likeStory(User user, Long storyId) {
+        if (user == null) {
+            throw new UnauthorizedException("Authenticated user is required.");
+        }
+
+        Story story = storyRepository.findById(storyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
+
+        if (storyLikeRepository.existsByUserIdAndStoryId(user.getId(), storyId)) {
+            throw new ConflictException("You have already liked this story.");
+        }
+
+        StoryLike like = StoryLike.builder()
+                .user(user)
+                .story(story)
+                .build();
+
+        storyLikeRepository.save(like);
+        gamificationService.awardXp(user, "LIKE_STORY", 2, "STORY", storyId);
+    }
+
+    @Transactional
+    public void unlikeStory(User user, Long storyId) {
+        if (user == null) {
+            throw new UnauthorizedException("Authenticated user is required.");
+        }
+
+        storyRepository.findById(storyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
+
+        StoryLike existingLike = storyLikeRepository.findByUserIdAndStoryId(user.getId(), storyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Like not found."));
+
+        storyLikeRepository.delete(existingLike);
+    }
+
+    @Transactional(readOnly = true)
+    public long getStoryLikeCount(Long storyId) {
+        return storyLikeRepository.countByStoryId(storyId);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasUserLikedStory(Long userId, Long storyId) {
+        return storyLikeRepository.existsByUserIdAndStoryId(userId, storyId);
+    }
+
+    @Transactional(readOnly = true)
+    public StoryLikesDTO getStoryLikes(Long storyId, User user) {
+        storyRepository.findById(storyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
+
+        long likeCount = storyLikeRepository.countByStoryId(storyId);
+        boolean likedByMe = user != null && storyLikeRepository.existsByUserIdAndStoryId(user.getId(), storyId);
+        return new StoryLikesDTO(likeCount, likedByMe);
+    }
+
     @Transactional(readOnly = true)
     public StoryQualityScoreDTO getStoryQualityScore(Long storyId) {
         Story story = storyRepository.findById(storyId)
-            .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
 
         int chapterCount = chapterRepository.findByStoryIdOrderByOrderIndexAsc(storyId).size();
         long voteCount = voteRepository.countByStoryId(storyId);

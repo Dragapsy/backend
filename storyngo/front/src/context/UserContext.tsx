@@ -1,6 +1,6 @@
 import { jwtDecode } from 'jwt-decode'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { UNAUTHORIZED_EVENT } from '../api/apiClient'
+import { apiClient } from '../api/apiClient'
 import { getCurrentUserProfile, login, register } from '../api/storyApi'
 import type { LoginRequest, RegisterRequest, UserDTO, UserRole } from '../types'
 
@@ -88,20 +88,25 @@ export function UserProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(USER_KEY, JSON.stringify(profile))
       setUser(profile)
     } catch {
-      logout()
+      setAuthError('Impossible de verifier la session pour le moment.')
     }
-  }, [logout])
+  }, [])
 
   useEffect(() => {
-    function handleUnauthorized() {
-      logout()
+    if (!token) {
+      delete apiClient.defaults.headers.common.Authorization
+      return
     }
 
-    window.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized)
-    return () => {
-      window.removeEventListener(UNAUTHORIZED_EVENT, handleUnauthorized)
+    apiClient.defaults.headers.common.Authorization = `Bearer ${token}`
+  }, [token])
+
+  useEffect(() => {
+    if (!token) {
+      return
     }
-  }, [logout])
+    void refreshProfile()
+  }, [token, refreshProfile])
 
   useEffect(() => {
     if (!token) {
@@ -142,13 +147,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
     }
   }, [token, logout])
-
-  useEffect(() => {
-    if (!token) {
-      return
-    }
-    void refreshProfile()
-  }, [token, refreshProfile])
 
   const loginUser = useCallback(async (request: LoginRequest) => {
     setAuthError(null)

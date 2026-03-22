@@ -1,4 +1,4 @@
-import { apiClient } from './apiClient'
+import { apiClient, publicApiClient } from './apiClient'
 import type {
   AdminAuditLogDTO,
   AdminReportDTO,
@@ -144,27 +144,27 @@ export async function getAdminAuditLogs(): Promise<AdminAuditLogDTO[]> {
 }
 
 export async function getStories(): Promise<StoryDTO[]> {
-  const response = await apiClient.get<StoryDTO[]>('/stories')
+  const response = await publicApiClient.get<StoryDTO[]>('/stories')
   return response.data
 }
 
 export async function getTrendingStories(): Promise<StoryDTO[]> {
-  const response = await apiClient.get<StoryDTO[]>('/stories/trending')
+  const response = await publicApiClient.get<StoryDTO[]>('/stories/trending')
   return response.data
 }
 
 export async function getUpcomingChapters(): Promise<ChapterDTO[]> {
-  const response = await apiClient.get<ChapterDTO[]>('/stories/upcoming')
+  const response = await publicApiClient.get<ChapterDTO[]>('/stories/upcoming')
   return response.data
 }
 
 export async function getStoryDetails(storyId: number): Promise<StoryDetailsDTO> {
-  const response = await apiClient.get<StoryDetailsDTO>(`/stories/${storyId}`)
+  const response = await publicApiClient.get<StoryDetailsDTO>(`/stories/${storyId}`)
   return response.data
 }
 
 export async function getStoryQualityScore(storyId: number): Promise<StoryQualityScoreDTO> {
-  const response = await apiClient.get<StoryQualityScoreDTO>(`/stories/${storyId}/quality-score`)
+  const response = await publicApiClient.get<StoryQualityScoreDTO>(`/stories/${storyId}/quality-score`)
   return response.data
 }
 
@@ -179,7 +179,7 @@ export async function addChapter(storyId: number, request: ChapterCreateRequest)
 }
 
 export async function getComments(chapterId: number): Promise<CommentDTO[]> {
-  const response = await apiClient.get<CommentDTO[]>(`/chapters/${chapterId}/comments`)
+  const response = await publicApiClient.get<CommentDTO[]>(`/chapters/${chapterId}/comments`)
   return response.data
 }
 
@@ -215,5 +215,18 @@ export async function archiveStory(storyId: number): Promise<StoryDTO> {
 
 export async function getMyStories(): Promise<StoryDTO[]> {
   const response = await apiClient.get<StoryDTO[]>('/stories/me')
+  return response.data
+}
+export async function likeStory(storyId: number): Promise<void> {
+  await apiClient.post(`/stories/${storyId}/like`)
+}
+
+export async function unlikeStory(storyId: number): Promise<void> {
+  await apiClient.delete(`/stories/${storyId}/like`)
+}
+
+export async function getStoryLikes(storyId: number): Promise<{ likeCount: number; likedByMe: boolean }> {
+  const client = localStorage.getItem('storyngo_token') ? apiClient : publicApiClient
+  const response = await client.get<{ likeCount: number; likedByMe: boolean }>(`/stories/${storyId}/likes`)
   return response.data
 }

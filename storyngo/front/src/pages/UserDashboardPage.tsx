@@ -450,7 +450,8 @@ export function UserDashboardPage() {
           <Typography color="text.secondary">Aucun point d'expérience acquis.</Typography>
         ) : (
           <Stack spacing={1.1}>
-            {xpHistory.map((event) => (
+            {xpHistory.slice(0, 5).map((event) => (
+              
               <Box
                 key={event.id}
                 sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.8, borderBottom: '1px dashed', borderColor: 'divider' }}

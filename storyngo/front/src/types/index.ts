@@ -12,6 +12,8 @@ export interface StoryDTO {
   authorProfileImageUrl?: string | null
   chapterCount: number
   status: StoryStatus
+  likeCount?: number
+  likedByMe?: boolean
 }
 
 export interface ChapterDTO {

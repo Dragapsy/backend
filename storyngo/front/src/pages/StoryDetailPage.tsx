@@ -27,9 +27,12 @@ import {
   createReport,
   getComments,
   getStoryDetails,
+  getStoryLikes,
   getStoryQualityScore,
+  likeStory,
   rejectStoryReview,
   submitStoryForReview,
+  unlikeStory,
   voteChapter,
 } from '../api/storyApi'
 import { ChapterCard } from '../components/ChapterCard'
@@ -112,6 +115,9 @@ export function StoryDetailPage() {
   const [votingId, setVotingId] = useState<number | null>(null)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const { isAuthenticated, user } = useUser()
+  const [likeCount, setLikeCount] = useState(0)
+  const [liked, setLiked] = useState(false)
+  const [liking, setLiking] = useState(false)
 
   const selectedChapter = useMemo(
     () => storyDetails?.chapters.find((chapter) => chapter.id === selectedChapterId) ?? null,
@@ -148,15 +154,22 @@ export function StoryDetailPage() {
       setLoading(false)
       return
     }
+    
+    
 
     setLoading(true)
     setError(null)
 
     try {
       const storyId = Number(id)
-      const details = await getStoryDetails(storyId)
+      const [details, likes] = await Promise.all([
+        getStoryDetails(storyId),
+        getStoryLikes(storyId),
+      ])
       setStoryDetails(details)
       void refreshQualityScore(storyId)
+      setLikeCount(likes.likeCount)
+      setLiked(likes.likedByMe)
       if (details.chapters.length > 0) {
         const firstChapterId = details.chapters[0].id
         setSelectedChapterId(firstChapterId)
@@ -185,6 +198,26 @@ export function StoryDetailPage() {
     }
   }
 
+  async function handleLikeStory() {
+    if (!storyDetails) return
+
+    setLiking(true)
+    try {
+      if (liked) {
+        await unlikeStory(storyDetails.story.id)
+        setLiked(false)
+        setLikeCount((prev) => Math.max(0, prev - 1))
+      } else {
+        await likeStory(storyDetails.story.id)
+        setLiked(true)
+        setLikeCount((prev) => prev + 1)
+      }
+    } catch {
+      setError('Impossible de mettre a jour le like de cette story.')
+    } finally {
+      setLiking(false)
+    }
+  }
   async function loadComments(chapterId: number) {
     setLoadingComments(true)
     setCommentsError(null)
@@ -221,10 +254,10 @@ export function StoryDetailPage() {
         chapters: storyDetails.chapters.map((chapter) =>
           chapter.id === chapterId
             ? {
-                ...chapter,
-                voteCount: chapter.voteCount + 1,
-                unlocked: chapter.unlocked || result.unlocked,
-              }
+              ...chapter,
+              voteCount: chapter.voteCount + 1,
+              unlocked: chapter.unlocked || result.unlocked,
+            }
             : chapter,
         ),
       })
@@ -337,6 +370,23 @@ export function StoryDetailPage() {
             <Typography variant="h4" sx={{ mt: 0.8 }}>
               {storyDetails.story.title}
             </Typography>
+
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 2 }}>
+              <Button
+                variant={liked ? 'contained' : 'outlined'}
+                color="error"
+                disabled={!isAuthenticated || liking}
+                onClick={() => {
+                  void handleLikeStory()
+                }}
+              >
+                {liking ? '...' : liked ? 'Retirer le like' : 'Liker'}
+              </Button>
+
+              <Typography variant="body2" color="text.secondary">
+                {likeCount} like{likeCount > 1 ? 's' : ''}
+              </Typography>
+            </Stack>
             <Typography variant="body1" color="text.secondary" sx={{ mt: 1.4, maxWidth: 820 }}>
               {storyDetails.story.summary}
             </Typography>

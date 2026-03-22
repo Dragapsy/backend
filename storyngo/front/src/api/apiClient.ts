@@ -11,6 +11,13 @@ export const apiClient = axios.create({
   },
 })
 
+export const publicApiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
+
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('storyngo_token')
   if (token) {
@@ -22,7 +29,13 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error?.response?.status === 401 && localStorage.getItem('storyngo_token')) {
+    const requestUrl = typeof error?.config?.url === 'string' ? error.config.url : ''
+
+    if (
+      error?.response?.status === 401
+      && localStorage.getItem('storyngo_token')
+      && requestUrl.includes('/users/me')
+    ) {
       window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
     }
     return Promise.reject(error)

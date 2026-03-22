@@ -20,7 +20,11 @@ public record StoryDTO(
     @Schema(description = "Nombre de chapitres", example = "3")
     int chapterCount,
     @Schema(description = "Statut workflow")
-    StoryStatus status
+    StoryStatus status,
+    @Schema(description = "Nombre total de likes", example = "17")
+    int likeCount,
+    @Schema(description = "Indique si l'utilisateur connecté a liké cette story", example = "true")
+    boolean likedByMe
 ) {
 }
 

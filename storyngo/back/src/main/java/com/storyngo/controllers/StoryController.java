@@ -11,6 +11,7 @@ import com.storyngo.dto.ReportCreateRequest;
 import com.storyngo.dto.StoryCreateRequest;
 import com.storyngo.dto.StoryDTO;
 import com.storyngo.dto.StoryDetailsDTO;
+import com.storyngo.dto.StoryLikesDTO;
 import com.storyngo.dto.StoryQualityScoreDTO;
 import com.storyngo.dto.VoteResultDTO;
 import com.storyngo.dto.AdminReportDTO;
@@ -119,6 +120,17 @@ public class StoryController {
     })
     public StoryQualityScoreDTO getStoryQualityScore(@PathVariable Long id) {
         return storyService.getStoryQualityScore(id);
+    }
+
+    @GetMapping("/stories/{id}/likes")
+    @Operation(summary = "Recuperer le nombre de likes d'une story")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Etat des likes", content = @Content(schema = @Schema(implementation = StoryLikesDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Story introuvable", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public StoryLikesDTO getStoryLikes(@AuthenticationPrincipal Object principal, @PathVariable Long id) {
+        User user = principal instanceof User authenticatedUser ? authenticatedUser : null;
+        return storyService.getStoryLikes(id, user);
     }
 
     @PostMapping("/stories")
@@ -343,5 +355,35 @@ public class StoryController {
     public List<StoryDTO> getMyStories(@AuthenticationPrincipal Object principal) {
         User user = requireUser(principal);
         return storyService.getStoriesByAuthor(user);
+    }
+
+    @PostMapping("/stories/{id}/like")
+    @Operation(summary = "Liker une story")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Like enregistré", content = @Content(schema = @Schema(implementation = VoteResultDTO.class))),
+            @ApiResponse(responseCode = "409", description = "Like déjà existant", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Non authentifié", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Accès interdit", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Story introuvable", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public VoteResultDTO likeStory(@AuthenticationPrincipal Object principal, @PathVariable Long id) {
+        User user = requireUser(principal);
+        storyService.likeStory(user, id);
+        return new VoteResultDTO(true);
+    }
+
+    @DeleteMapping("/stories/{id}/like")
+    @Operation(summary = "Retirer le like d'une story")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Like retire", content = @Content(schema = @Schema(implementation = VoteResultDTO.class))),
+            @ApiResponse(responseCode = "401", description = "Non authentifie", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Story ou like introuvable", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public VoteResultDTO unlikeStory(@AuthenticationPrincipal Object principal, @PathVariable Long id) {
+        User user = requireUser(principal);
+        storyService.unlikeStory(user, id);
+        return new VoteResultDTO(false);
     }
 }
