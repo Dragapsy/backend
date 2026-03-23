@@ -1,12 +1,27 @@
+import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined'
+import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined'
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder'
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline'
 import { useEffect, useState } from 'react'
-import { Alert, Box, Button, Paper, Stack, Typography } from '@mui/material'
+import { Alert, Box, Button, Chip, Paper, Stack, Typography } from '@mui/material'
 import { Link } from 'react-router-dom'
 import { approveStoryReview, getReviewerDashboard, rejectStoryReview } from '../api/storyApi'
 import { EmptyState } from '../components/EmptyState'
 import { LoadingState } from '../components/LoadingState'
 import { SectionTitle } from '../components/SectionTitle'
-import { StoryCard } from '../components/StoryCard'
 import type { AdminReportDTO, StoryDTO } from '../types'
+
+function formatStoryDate(createdAt?: string) {
+  if (!createdAt) {
+    return 'Date indisponible'
+  }
+
+  return new Date(createdAt).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
 
 export function ReviewerDashboardPage() {
   const [pendingStories, setPendingStories] = useState<StoryDTO[]>([])
@@ -59,6 +74,117 @@ export function ReviewerDashboardPage() {
     }
   }
 
+  function renderCompactStory(story: StoryDTO, withActions = false) {
+    const likeCount = story.likeCount ?? 0
+
+    return (
+      <Paper key={story.id} variant="outlined" sx={{ p: 0, borderRadius: 2, overflow: 'hidden' }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '10px 1fr auto' },
+            alignItems: 'stretch',
+          }}
+        >
+          <Box
+            sx={{
+              display: { xs: 'none', sm: 'block' },
+              background: '#364e14',
+              opacity: 0.5,
+            }}
+          />
+
+          <Box sx={{ p: 2 }}>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 1 }}>
+              <Chip
+                size="small"
+                icon={<FavoriteBorderIcon />}
+                label={`${likeCount} like${likeCount > 1 ? 's' : ''}`}
+                sx={{ backgroundColor: '#f8f8f8' }}
+              />
+              <Chip
+                size="small"
+                icon={<CalendarTodayOutlinedIcon />}
+                label={formatStoryDate(story.createdAt)}
+                sx={{ backgroundColor: '#f8f8f8' }}
+              />
+            </Stack>
+
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.3, textAlign: 'left' }}>
+              {story.title}
+            </Typography>
+
+            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mt: 0.9, color: 'text.secondary' }}>
+              <PersonOutlineIcon sx={{ fontSize: 18 }} />
+              <Typography variant="body2">Par {story.authorName}</Typography>
+            </Stack>
+
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                mt: 1.1,
+                lineHeight: 1.65,
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                textAlign: 'left',
+              }}
+            >
+              {story.summary}
+            </Typography>
+          </Box>
+
+          <Stack
+            spacing={1}
+            justifyContent="center"
+            alignItems={{ xs: 'stretch', sm: 'flex-end' }}
+            sx={{
+              px: { xs: 2, sm: 2 },
+              pb: { xs: 2, sm: 0 },
+              pr: { xs: 2, sm: 2 },
+              minWidth: { sm: 170 },
+            }}
+          >
+            <Chip
+              size="small"
+              label={`${story.chapterCount} chapitre${story.chapterCount > 1 ? 's' : ''}`}
+              variant="outlined"
+              sx={{ width: 'fit-content' }}
+            />
+
+            {withActions ? (
+              <>
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={() => void handleApprove(story.id)}
+                  disabled={updatingId === story.id}
+                >
+                  Approuver
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="secondary"
+                  onClick={() => void handleReject(story.id)}
+                  disabled={updatingId === story.id}
+                >
+                  Rejeter
+                </Button>
+              </>
+            ) : null}
+
+            <Button size="small" component={Link} to={`/stories/${story.id}`}>
+              Ouvrir le detail
+            </Button>
+          </Stack>
+        </Box>
+      </Paper>
+    )
+  }
+
   if (loading) {
     return <LoadingState label="Chargement reviewer..." description="Recuperation des stories a traiter." />
   }
@@ -72,9 +198,16 @@ export function ReviewerDashboardPage() {
           borderRadius: 1,
         }}
       >
-        <Typography variant="overline" color="primary" fontWeight={700}>
-          Dashboard Reviewer
-        </Typography>
+        <Chip
+          icon={<AutoStoriesOutlinedIcon />}
+          label="Espace reviewer"
+          sx={{
+            mb: 1.5,
+            backgroundColor: 'rgba(255,255,255,0.72)',
+            borderColor: 'rgba(15,23,42,0.08)',
+          }}
+          variant="outlined"
+        />
         <Typography variant="h4" sx={{ mt: 0.8 }}>
           Validation des histoires
         </Typography>
@@ -96,35 +229,7 @@ export function ReviewerDashboardPage() {
           />
         ) : (
           <Stack spacing={2}>
-            {pendingStories.map((story) => (
-              <Paper key={story.id} variant="outlined" sx={{ p: 2.2, borderRadius: 1 }}>
-                <Box sx={{ display: 'grid', gap: 1.6 }}>
-                  <StoryCard story={story} />
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    <Button
-                      size="small"
-                      variant="contained"
-                      onClick={() => void handleApprove(story.id)}
-                      disabled={updatingId === story.id}
-                    >
-                      Approuver
-                    </Button>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color="secondary"
-                      onClick={() => void handleReject(story.id)}
-                      disabled={updatingId === story.id}
-                    >
-                      Rejeter
-                    </Button>
-                    <Button size="small" component={Link} to={`/stories/${story.id}`}>
-                      Ouvrir le detail
-                    </Button>
-                  </Box>
-                </Box>
-              </Paper>
-            ))}
+            {pendingStories.map((story) => renderCompactStory(story, true))}
           </Stack>
         )}
       </section>
@@ -139,10 +244,8 @@ export function ReviewerDashboardPage() {
             onAction={() => void loadDashboard()}
           />
         ) : (
-          <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(3, 1fr)' } }}>
-            {validatedStories.map((story) => (
-              <StoryCard key={story.id} story={story} />
-            ))}
+          <Box sx={{ display: 'grid', gap: 1.5 }}>
+            {validatedStories.map((story) => renderCompactStory(story))}
           </Box>
         )}
       </section>

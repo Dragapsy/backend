@@ -228,7 +228,7 @@ class StoryServiceTests {
     void submitStoryForReview_updatesStatusToInReview() {
         User author = User.builder().id(1L).build();
         Story story = Story.builder().id(100L).author(author).status(StoryStatus.DRAFT).build();
-        StoryDTO mapped = new StoryDTO(100L, "Titre", "Resume", "Auteur", null, null, 0, StoryStatus.IN_REVIEW);
+        StoryDTO mapped = new StoryDTO(100L, "Titre", "Resume", "Auteur", null, null, null, 0, StoryStatus.IN_REVIEW, 0, false);
 
         when(storyRepository.findById(100L)).thenReturn(Optional.of(story));
         when(storyRepository.save(any(Story.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -275,7 +275,7 @@ class StoryServiceTests {
     void approveStoryReview_setsStatusToPublished() {
         User reviewer = User.builder().id(9L).role(com.storyngo.models.UserRole.REVIEWER).build();
         Story story = Story.builder().id(100L).status(StoryStatus.IN_REVIEW).author(User.builder().id(1L).build()).build();
-        StoryDTO mapped = new StoryDTO(100L, "Titre", "Resume", "Auteur", null, null, 0, StoryStatus.PUBLISHED);
+        StoryDTO mapped = new StoryDTO(100L, "Titre", "Resume", "Auteur", null, null, null, 0, StoryStatus.PUBLISHED, 0, false);
 
         when(storyRepository.findById(100L)).thenReturn(Optional.of(story));
         when(storyRepository.save(any(Story.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -291,7 +291,7 @@ class StoryServiceTests {
     void rejectStoryReview_setsStatusToDraft() {
         User reviewer = User.builder().id(9L).role(com.storyngo.models.UserRole.REVIEWER).build();
         Story story = Story.builder().id(100L).status(StoryStatus.IN_REVIEW).author(User.builder().id(1L).build()).build();
-        StoryDTO mapped = new StoryDTO(100L, "Titre", "Resume", "Auteur", null, null, 0, StoryStatus.DRAFT);
+        StoryDTO mapped = new StoryDTO(100L, "Titre", "Resume", "Auteur", null, null, null, 0, StoryStatus.DRAFT, 0, false);
 
         when(storyRepository.findById(100L)).thenReturn(Optional.of(story));
         when(storyRepository.save(any(Story.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -307,7 +307,7 @@ class StoryServiceTests {
     void archiveStory_setsStatusToArchived() {
         User author = User.builder().id(1L).build();
         Story story = Story.builder().id(100L).status(StoryStatus.PUBLISHED).author(author).build();
-        StoryDTO mapped = new StoryDTO(100L, "Titre", "Resume", "Auteur", null, null, 0, StoryStatus.ARCHIVED);
+        StoryDTO mapped = new StoryDTO(100L, "Titre", "Resume", "Auteur", null, null, null, 0, StoryStatus.ARCHIVED, 0, false);
 
         when(storyRepository.findById(100L)).thenReturn(Optional.of(story));
         when(storyRepository.save(any(Story.class))).thenAnswer(invocation -> invocation.getArgument(0));

@@ -8,6 +8,7 @@ export interface StoryDTO {
   title: string
   summary: string
   authorName: string
+  createdAt?: string
   authorRole?: UserRole
   authorProfileImageUrl?: string | null
   chapterCount: number

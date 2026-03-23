@@ -2,6 +2,7 @@ package com.storyngo.dto;
 
 import com.storyngo.models.StoryStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.LocalDateTime;
 
 @Schema(description = "Representation resumee d'une story")
 public record StoryDTO(
@@ -13,6 +14,8 @@ public record StoryDTO(
     String summary,
     @Schema(description = "Pseudo de l'auteur", example = "Auteur")
     String authorName,
+    @Schema(description = "Date de creation de la story")
+    LocalDateTime createdAt,
     @Schema(description = "Role de l'auteur", example = "REVIEWER")
     String authorRole,
     @Schema(description = "Photo de profil de l'auteur", example = "https://cdn.storyngo.dev/profiles/auteur.png")

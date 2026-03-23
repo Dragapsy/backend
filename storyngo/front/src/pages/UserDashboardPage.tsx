@@ -1,3 +1,7 @@
+import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined'
+import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined'
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder'
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline'
 import { useEffect, useState } from 'react'
 import { Alert, Avatar, Box, Button, Chip, Paper, Stack, TextField, Typography } from '@mui/material'
 import {
@@ -13,9 +17,20 @@ import {
 } from '../api/storyApi'
 import { getApiErrorMessage } from '../api/apiClient'
 import { LoadingState } from '../components/LoadingState'
-import { StoryCard } from '../components/StoryCard'
 import { useUser } from '../context/UserContext'
 import type { SocialFollowingDTO, StoryDTO, UserDTO, UserXpEventDTO, WeeklyLeaderboardEntryDTO } from '../types'
+
+function formatStoryDate(createdAt?: string) {
+  if (!createdAt) {
+    return 'Date indisponible'
+  }
+
+  return new Date(createdAt).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
 
 export function UserDashboardPage() {
   const { user } = useUser()
@@ -134,19 +149,155 @@ export function UserDashboardPage() {
     }
   }
 
+  function renderCompactStoryCard(story: StoryDTO) {
+    const likeCount = story.likeCount ?? 0
+
+    return (
+      <Paper
+        key={story.id}
+        variant="outlined"
+        sx={{
+          p: 0,
+          overflow: 'hidden',
+          borderRadius: 2,
+          transition: 'transform 180ms ease, border-color 180ms ease',
+          '&:hover': {
+            transform: 'translateY(-2px)',
+          },
+        }}
+      >
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '10px 1fr auto' },
+            alignItems: 'stretch',
+          }}
+        >
+          <Box
+            sx={{
+              display: { xs: 'none', sm: 'block' },
+              background: '#364e14',
+              opacity: 0.5,
+            }}
+          />
+
+          <Box sx={{ p: 2 }}>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 1 }}>
+              <Chip
+                size="small"
+                icon={<FavoriteBorderIcon />}
+                label={`${likeCount} like${likeCount > 1 ? 's' : ''}`}
+                sx={{ backgroundColor: '#f8f8f8' }}
+              />
+              <Chip
+                size="small"
+                icon={<CalendarTodayOutlinedIcon />}
+                label={formatStoryDate(story.createdAt)}
+                sx={{ backgroundColor: '#f8f8f8' }}
+              />
+            </Stack>
+
+            <Typography
+              variant="subtitle1"
+              sx={{
+                fontWeight: 700,
+                lineHeight: 1.3,
+                textAlign: 'left',
+              }}
+            >
+              {story.title}
+            </Typography>
+
+            <Stack
+              direction="row"
+              spacing={0.75}
+              alignItems="center"
+              sx={{ mt: 0.9, color: 'text.secondary' }}
+            >
+              <PersonOutlineIcon sx={{ fontSize: 18 }} />
+              <Typography variant="body2">Par {story.authorName}</Typography>
+            </Stack>
+
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                mt: 1.1,
+                lineHeight: 1.65,
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                textAlign: 'left',
+              }}
+            >
+              {story.summary}
+            </Typography>
+          </Box>
+
+          <Stack
+            spacing={1}
+            justifyContent="center"
+            alignItems={{ xs: 'stretch', sm: 'flex-end' }}
+            sx={{
+              px: { xs: 2, sm: 2 },
+              pb: { xs: 2, sm: 0 },
+              pr: { xs: 2, sm: 2 },
+              minWidth: { sm: 150 },
+            }}
+          >
+            <Chip
+              size="small"
+              label={`${story.chapterCount} chapitre${story.chapterCount > 1 ? 's' : ''}`}
+              variant="outlined"
+              sx={{ width: 'fit-content' }}
+            />
+
+            <Button
+              variant="contained"
+              href={`/stories/${story.id}`}
+              sx={{
+                px: 2,
+                py: 0.9,
+                borderRadius: 999,
+                textTransform: 'none',
+                fontWeight: 700,
+                boxShadow: 'none',
+                width: { xs: '100%', sm: 'fit-content' },
+              }}
+            >
+              Lire
+            </Button>
+          </Stack>
+        </Box>
+      </Paper>
+    )
+  }
+
   if (loading) {
     return <LoadingState label="Chargement du profil..." description="Recuperation de vos informations utilisateur." />
   }
 
   return (
     <Stack spacing={3}>
-
-      <Typography variant="h4" sx={{ mt: 0.8 }}>
-        Mon profil et mon activite
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mt: 1.2 }}>
-        Consultez vos informations publiques et votre progression sur Storyn&apos;Go.
-      </Typography>
+      <Box>
+        <Chip
+          icon={<AutoStoriesOutlinedIcon />}
+          label="Espace personnel"
+          sx={{
+            mb: 1.5,
+            backgroundColor: 'rgba(255,255,255,0.72)',
+            borderColor: 'rgba(15,23,42,0.08)',
+          }}
+          variant="outlined"
+        />
+        <Typography variant="h4" sx={{ mt: 0.8 }}>
+          Mon profil et mon activite
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mt: 1.2 }}>
+          Consultez vos informations publiques et votre progression sur Storyn&apos;Go.
+        </Typography>
+      </Box>
 
 
       {error && <Alert severity="error">{error}</Alert>}
@@ -433,10 +584,8 @@ export function UserDashboardPage() {
           {feed.length === 0 ? (
             <Typography color="text.secondary">Suivez des auteurs pour voir leurs histoires ici.</Typography>
           ) : (
-            <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' } }}>
-              {feed.map((story) => (
-                <StoryCard key={story.id} story={story} />
-              ))}
+            <Box sx={{ display: 'grid', gap: 1.5 }}>
+              {feed.map(renderCompactStoryCard)}
             </Box>
           )}
         </Paper>
@@ -482,16 +631,8 @@ export function UserDashboardPage() {
             Vous n'avez aucune histoire archivée.
           </Typography>
         ) : (
-          <Box
-            sx={{
-              display: 'grid',
-              gap: 2,
-              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-            }}
-          >
-            {archivedStories.map((story) => (
-              <StoryCard key={story.id} story={story} />
-            ))}
+          <Box sx={{ display: 'grid', gap: 1.5 }}>
+            {archivedStories.map(renderCompactStoryCard)}
           </Box>
         )}
       </Paper>

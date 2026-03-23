@@ -96,7 +96,7 @@ public class StoryService {
     public List<StoryDTO> getStories() {
         return storyRepository.findByStatusOrderByCreatedAtDesc(StoryStatus.PUBLISHED)
                 .stream()
-                .map(storyMapper::toDto)
+                .map(this::toStoryDto)
                 .toList();
     }
 
@@ -117,7 +117,7 @@ public class StoryService {
                 })
                 .toList();
 
-        return new StoryDetailsDTO(storyMapper.toDto(story), chapters);
+        return new StoryDetailsDTO(toStoryDto(story), chapters);
     }
 
     @Transactional
@@ -147,7 +147,7 @@ public class StoryService {
     public List<StoryDTO> getTrendingStories() {
         return storyRepository.findTrendingStoriesByStatus(StoryStatus.PUBLISHED)
                 .stream()
-                .map(storyMapper::toDto)
+                .map(this::toStoryDto)
                 .toList();
     }
 
@@ -195,7 +195,7 @@ public class StoryService {
         Chapter savedChapter = chapterRepository.save(chapter);
         createVersionSnapshot(savedChapter);
 
-        StoryDTO storyDto = storyMapper.toDto(savedStory);
+        StoryDTO storyDto = toStoryDto(savedStory);
         ChapterDTO chapterDto = chapterMapper.toDto(savedChapter, 0L, false);
 
         gamificationService.awardXp(author, "CREATE_STORY", 80, "STORY", savedStory.getId());
@@ -333,7 +333,7 @@ public class StoryService {
         story.setStatus(StoryStatus.IN_REVIEW);
         Story saved = storyRepository.save(story);
         gamificationService.awardXp(user, "SUBMIT_REVIEW", 12, "STORY", saved.getId());
-        return storyMapper.toDto(saved);
+        return toStoryDto(saved);
     }
 
     @Transactional
@@ -350,7 +350,7 @@ public class StoryService {
         story.setStatus(StoryStatus.PUBLISHED);
         Story saved = storyRepository.save(story);
         gamificationService.awardXp(user, "APPROVE_REVIEW", 25, "STORY", saved.getId());
-        return storyMapper.toDto(saved);
+        return toStoryDto(saved);
     }
 
     @Transactional
@@ -367,7 +367,7 @@ public class StoryService {
         story.setStatus(StoryStatus.DRAFT);
         Story saved = storyRepository.save(story);
         gamificationService.awardXp(user, "REJECT_REVIEW", 8, "STORY", saved.getId());
-        return storyMapper.toDto(saved);
+        return toStoryDto(saved);
     }
 
     @Transactional
@@ -384,7 +384,7 @@ public class StoryService {
         story.setStatus(StoryStatus.ARCHIVED);
         Story saved = storyRepository.save(story);
         gamificationService.awardXp(user, "ARCHIVE_STORY", 5, "STORY", saved.getId());
-        return storyMapper.toDto(saved);
+        return toStoryDto(saved);
     }
 
     @Transactional(readOnly = true)
@@ -395,7 +395,7 @@ public class StoryService {
 
         return storyRepository.findByAuthorIdOrderByCreatedAtDesc(user.getId())
                 .stream()
-                .map(storyMapper::toDto)
+                .map(this::toStoryDto)
                 .toList();
     }
 
@@ -515,5 +515,23 @@ public class StoryService {
                         "Chapter order is inconsistent. Expected chapter order index " + expected + ".");
             }
         }
+    }
+
+    private StoryDTO toStoryDto(Story story) {
+        StoryDTO dto = storyMapper.toDto(story);
+        int likeCount = Math.toIntExact(storyLikeRepository.countByStoryId(story.getId()));
+
+        return new StoryDTO(
+                dto.id(),
+                dto.title(),
+                dto.summary(),
+                dto.authorName(),
+                dto.createdAt(),
+                dto.authorRole(),
+                dto.authorProfileImageUrl(),
+                dto.chapterCount(),
+                dto.status(),
+                likeCount,
+                dto.likedByMe());
     }
 }

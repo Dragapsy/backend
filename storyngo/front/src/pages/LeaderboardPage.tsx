@@ -1,3 +1,4 @@
+import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined'
 import { useEffect, useState } from 'react'
 import {
   Alert,
@@ -62,48 +63,54 @@ export function LeaderboardPage() {
 
   return (
     <Stack spacing={3}>
-      
-        <Typography variant="overline" color="primary" fontWeight={700}>
-          Classement StorynGo
-        </Typography>
+      <Box>
+        <Chip
+          icon={<AutoStoriesOutlinedIcon />}
+          label="Classement communautaire"
+          sx={{
+            mb: 1.5,
+            backgroundColor: 'rgba(255,255,255,0.72)',
+            borderColor: 'rgba(15,23,42,0.08)',
+          }}
+          variant="outlined"
+        />
         <Typography variant="h4" sx={{ mt: 0.8 }}>
-          Top 50 des utilisateurs les plus actif
+          Top 50 des utilisateurs les plus actifs
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mt: 1.2 }}>
-          Comparez la progression de la communauté sur la semaine ou le mois.
+          Comparez la progression de la communaute sur la semaine ou le mois.
         </Typography>
+      </Box>
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', md: 'center' }}>
-          <TextField
-            select
-            label="Période"
-            value={period}
-            onChange={(event) => setPeriod(event.target.value as LeaderboardPeriod)}
-            sx={{ minWidth: 200 }}
-            size="small"
-          >
-            <MenuItem value="WEEK">Semaine</MenuItem>
-            <MenuItem value="MONTH">Mois</MenuItem>
-          </TextField>
-          <TextField
-            select
-            label="Rôle"
-            value={roleFilter}
-            onChange={(event) => setRoleFilter(event.target.value as 'ALL' | UserRole)}
-            sx={{ minWidth: 180 }}
-            size="small"
-          >
-            <MenuItem value="ALL">Tous</MenuItem>
-            <MenuItem value="USER">Utilisateur</MenuItem>
-            <MenuItem value="REVIEWER">Auteur</MenuItem>
-            <MenuItem value="ADMIN">Administrateur</MenuItem>
-          </TextField>
-          <Typography color="text.secondary">Affichage des 50 meilleurs utilisateurs.</Typography>
-        </Stack>
-
+      <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', md: 'center' }}>
+        <TextField
+          select
+          label="Periode"
+          value={period}
+          onChange={(event) => setPeriod(event.target.value as LeaderboardPeriod)}
+          sx={{ minWidth: 200 }}
+          size="small"
+        >
+          <MenuItem value="WEEK">Semaine</MenuItem>
+          <MenuItem value="MONTH">Mois</MenuItem>
+        </TextField>
+        <TextField
+          select
+          label="Role"
+          value={roleFilter}
+          onChange={(event) => setRoleFilter(event.target.value as 'ALL' | UserRole)}
+          sx={{ minWidth: 180 }}
+          size="small"
+        >
+          <MenuItem value="ALL">Tous</MenuItem>
+          <MenuItem value="USER">Utilisateur</MenuItem>
+          <MenuItem value="REVIEWER">Auteur</MenuItem>
+          <MenuItem value="ADMIN">Administrateur</MenuItem>
+        </TextField>
+        <Typography color="text.secondary">Affichage des 50 meilleurs utilisateurs.</Typography>
+      </Stack>
 
       <Stack spacing={1.2}>
         {displayedEntries.length === 0 ? (

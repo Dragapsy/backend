@@ -1,3 +1,4 @@
+import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import {
@@ -364,9 +365,17 @@ export function StoryDetailPage() {
       >
         <Box sx={{ display: 'grid', gap: 2.6, gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' } }}>
           <Box>
-            <Typography variant="overline" color="text.secondary">
-              Story #{storyDetails.story.id}
-            </Typography>
+            <Chip
+              icon={<AutoStoriesOutlinedIcon />}
+              label="Lecture de l'histoire"
+              sx={{
+                mb: 1.5,
+                backgroundColor: 'rgba(255,255,255,0.72)',
+                borderColor: 'rgba(15,23,42,0.08)',
+              }}
+              variant="outlined"
+            />
+            
             <Typography variant="h4" sx={{ mt: 0.8 }}>
               {storyDetails.story.title}
             </Typography>

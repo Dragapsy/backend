@@ -1,10 +1,11 @@
+import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined'
 import { useState, type FormEvent } from 'react'
-import { Box, Button, Checkbox, FormControlLabel, Paper, Stack, TextField, Typography } from '@mui/material'
+import { Box, Button, Checkbox, Chip, FormControlLabel, Paper, Stack, TextField, Typography } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import { getApiErrorMessage } from '../api/apiClient'
+import { createStory } from '../api/storyApi'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { LoadingState } from '../components/LoadingState'
-import { createStory } from '../api/storyApi'
 
 export function CreateStoryPage() {
   const navigate = useNavigate()
@@ -49,12 +50,22 @@ export function CreateStoryPage() {
 
   return (
     <Paper variant="outlined" sx={{ p: { xs: 3, md: 4 } }}>
-      <Typography variant="h4">Création de story</Typography>
+      <Chip
+        icon={<AutoStoriesOutlinedIcon />}
+        label="Ecriture d'une nouvelle histoire"
+        sx={{
+          mb: 1.5,
+          backgroundColor: 'rgba(255,255,255,0.72)',
+          borderColor: 'rgba(15,23,42,0.08)',
+        }}
+        variant="outlined"
+      />
+      <Typography variant="h4">Creation de story</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
         Publiez une nouvelle intrigue et lancez votre premiere vague de votes.
       </Typography>
       <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-        Le premier chapitre définit le ton de votre histoire : soyez les plus créatif possible afin d'attiré l'œil.
+        Le premier chapitre definit le ton de votre histoire : soyez le plus creatif possible afin d'attirer l'oeil.
       </Typography>
 
       {error && <Box sx={{ mt: 2 }}><ErrorBanner message={error} compact /></Box>}
@@ -73,7 +84,7 @@ export function CreateStoryPage() {
         />
 
         <TextField
-          label="Résumé"
+          label="Resume"
           required
           inputProps={{ maxLength: 2000 }}
           rows={3}
