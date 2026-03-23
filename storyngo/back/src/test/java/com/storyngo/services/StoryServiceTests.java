@@ -28,6 +28,7 @@ import com.storyngo.models.User;
 import com.storyngo.repositories.ChapterRepository;
 import com.storyngo.repositories.ChapterVersionRepository;
 import com.storyngo.repositories.CommentRepository;
+import com.storyngo.repositories.StoryLikeRepository;
 import com.storyngo.repositories.StoryRepository;
 import com.storyngo.repositories.UserRepository;
 import com.storyngo.repositories.VoteRepository;
@@ -63,6 +64,9 @@ class StoryServiceTests {
     private UserRepository userRepository;
 
     @Mock
+    private StoryLikeRepository storyLikeRepository;
+
+    @Mock
     private StoryMapper storyMapper;
 
     @Mock
@@ -82,6 +86,7 @@ class StoryServiceTests {
             voteRepository,
             commentRepository,
             userRepository,
+            storyLikeRepository,
             storyMapper,
             chapterMapper,
             new ModerationService(),
