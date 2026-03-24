@@ -43,6 +43,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.storyngo.services.GamificationService;
 
+@SuppressWarnings("null")
 @ExtendWith(MockitoExtension.class)
 class StoryServiceTests {
 
@@ -211,14 +212,14 @@ class StoryServiceTests {
             .charLimit(5000)
             .content("suite")
             .build();
-        ChapterDTO mapped = new ChapterDTO(201L, "suite", 2, null, 0L, 5, 5000, false);
+        ChapterDTO mapped = new ChapterDTO(201L, "suite", 2, null, 0L, 5, 5000, false, false, false);
 
         when(storyRepository.findById(100L)).thenReturn(Optional.of(story));
         when(chapterRepository.findByStoryIdOrderByOrderIndexAsc(100L)).thenReturn(List.of(last));
         when(voteRepository.countByChapterId(200L)).thenReturn(5L);
         when(chapterVersionRepository.countByChapterId(201L)).thenReturn(0L);
         when(chapterRepository.save(any(Chapter.class))).thenReturn(saved);
-        when(chapterMapper.toDto(saved, 0L, false)).thenReturn(mapped);
+        when(chapterMapper.toDto(saved, 0L, false, false)).thenReturn(mapped);
 
         ChapterDTO result = storyService.addChapter(author, 100L, new ChapterCreateRequest("suite", false));
 
@@ -278,7 +279,41 @@ class StoryServiceTests {
             () -> storyService.addChapter(author, 100L, new ChapterCreateRequest("suite", false))
         );
 
-        assertEquals("Chapters can only be added while story is in DRAFT status.", ex.getMessage());
+        assertEquals("Chapters can only be added while story is in DRAFT or PUBLISHED status.", ex.getMessage());
+    }
+
+    @Test
+    void addChapter_resetsStatusToDraftWhenStoryIsPublished() {
+        User author = User.builder().id(1L).build();
+        Story story = Story.builder().id(100L).author(author).status(StoryStatus.PUBLISHED).build();
+        Chapter last = Chapter.builder()
+            .id(200L)
+            .orderIndex(1)
+            .voteThreshold(5)
+            .charLimit(2000)
+            .build();
+
+        Chapter saved = Chapter.builder()
+            .id(201L)
+            .orderIndex(2)
+            .voteThreshold(5)
+            .charLimit(3000)
+            .content("suite")
+            .build();
+        ChapterDTO mapped = new ChapterDTO(201L, "suite", 2, null, 0L, 5, 3000, false, false, false);
+
+        when(storyRepository.findById(100L)).thenReturn(Optional.of(story));
+        when(chapterRepository.findByStoryIdOrderByOrderIndexAsc(100L)).thenReturn(List.of(last));
+        when(voteRepository.countByChapterId(200L)).thenReturn(5L);
+        when(chapterVersionRepository.countByChapterId(201L)).thenReturn(0L);
+        when(chapterRepository.save(any(Chapter.class))).thenReturn(saved);
+        when(storyRepository.save(any(Story.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(chapterMapper.toDto(saved, 0L, false, false)).thenReturn(mapped);
+
+        storyService.addChapter(author, 100L, new ChapterCreateRequest("suite", false));
+
+        assertEquals(StoryStatus.DRAFT, story.getStatus());
+        verify(storyRepository).save(story);
     }
 
     @Test
@@ -374,14 +409,14 @@ class StoryServiceTests {
             .content("old content")
             .createdAt(java.time.LocalDateTime.now().minusDays(1))
             .build();
-        ChapterDTO mapped = new ChapterDTO(40L, "old content", 1, "Auteur", 4L, 10, 2000, false);
+        ChapterDTO mapped = new ChapterDTO(40L, "old content", 1, "Auteur", 4L, 10, 2000, false, false, false);
 
         when(chapterRepository.findById(40L)).thenReturn(Optional.of(chapter));
         when(chapterVersionRepository.findByIdAndChapterId(3L, 40L)).thenReturn(Optional.of(targetVersion));
         when(chapterRepository.save(any(Chapter.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(chapterVersionRepository.countByChapterId(40L)).thenReturn(2L);
         when(voteRepository.countByChapterId(40L)).thenReturn(4L);
-        when(chapterMapper.toDto(any(Chapter.class), any(Long.class), any(Boolean.class))).thenReturn(mapped);
+        when(chapterMapper.toDto(any(Chapter.class), any(Long.class), any(Boolean.class), any(Boolean.class))).thenReturn(mapped);
 
         ChapterDTO result = storyService.restoreChapterVersion(author, 40L, 3L);
 
@@ -420,14 +455,14 @@ class StoryServiceTests {
             .charLimit(2000)
             .voteThreshold(20)
             .build();
-        ChapterDTO mapped = new ChapterDTO(40L, "new", 1, "Auteur", 0L, 20, 2000, false);
+        ChapterDTO mapped = new ChapterDTO(40L, "new", 1, "Auteur", 0L, 20, 2000, false, false, false);
 
         when(chapterRepository.findById(40L)).thenReturn(Optional.of(chapter));
         when(chapterRepository.findByStoryIdOrderByOrderIndexAsc(10L)).thenReturn(List.of(chapter));
         when(chapterRepository.save(any(Chapter.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(chapterVersionRepository.countByChapterId(40L)).thenReturn(1L);
         when(voteRepository.countByChapterId(40L)).thenReturn(0L);
-        when(chapterMapper.toDto(any(Chapter.class), any(Long.class), any(Boolean.class))).thenReturn(mapped);
+        when(chapterMapper.toDto(any(Chapter.class), any(Long.class), any(Boolean.class), any(Boolean.class))).thenReturn(mapped);
 
         ChapterDTO result = storyService.updateChapter(author, 40L, new ChapterUpdateRequest("new", true));
 

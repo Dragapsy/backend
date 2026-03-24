@@ -88,7 +88,7 @@ export function HomePage() {
         ),
       )
     } catch {
-      setError('Vote impossible. Verifiez que le backend tourne avec les comptes de test.')
+      setError('Vote impossible. Vérifiez que le backend tourne avec les comptes de test.')
     } finally {
       setVotingId(null)
     }
@@ -456,14 +456,14 @@ export function HomePage() {
       {loading && (
         <LoadingState
           label="Chargement du dashboard..."
-          description="Recuperation des stories, tendances et chapitres a debloquer."
+          description="Récupération des stories, tendances et chapitres à débloquer."
         />
       )}
 
       {error && (
         <ErrorBanner
           message={error}
-          actionLabel="Reessayer"
+          actionLabel="Réessayer"
           onAction={() => void loadDashboard()}
         />
       )}
@@ -473,8 +473,8 @@ export function HomePage() {
 
         {stories.length === 0 && !loading ? (
           <EmptyState
-            title="Aucune story recente"
-            description="Les prochaines publications apparaitront ici des qu'elles seront en ligne."
+            title="Aucune story récente"
+            description="Les prochaines publications apparaîtront ici dès qu'elles seront en ligne."
             actionLabel="Actualiser"
             onAction={() => void loadDashboard()}
           />
@@ -541,8 +541,8 @@ export function HomePage() {
           {upcomingChapters.length === 0 && !loading ? (
             <EmptyState
               title="Aucun chapitre en attente"
-              description="Tous les chapitres sont debloques."
-              actionLabel="Rafraichir"
+              description="Tous les chapitres sont débloqués."
+              actionLabel="Rafraîchir"
               onAction={() => void loadDashboard()}
             />
           ) : (

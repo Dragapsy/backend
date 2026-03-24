@@ -26,6 +26,8 @@ export interface ChapterDTO {
   threshold: number
   charLimit: number
   unlocked: boolean
+  votedByMe?: boolean
+  votingClosed?: boolean
 }
 
 export interface StoryDetailsDTO {

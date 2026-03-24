@@ -48,8 +48,8 @@ public class StoryPermissionService {
     }
 
     private void assertCanAddChapter(UserRole role, boolean isAuthor, StoryStatus status) {
-        if (status != StoryStatus.DRAFT) {
-            throw new ConflictException("Chapters can only be added while story is in DRAFT status.");
+        if (status != StoryStatus.DRAFT && status != StoryStatus.PUBLISHED) {
+            throw new ConflictException("Chapters can only be added while story is in DRAFT or PUBLISHED status.");
         }
         if (!isAuthor) {
             throw new ForbiddenOperationException("Only the story author can add a chapter.");

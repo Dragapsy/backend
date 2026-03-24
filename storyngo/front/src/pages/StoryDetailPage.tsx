@@ -7,6 +7,11 @@ import {
   Checkbox,
   Chip,
   Collapse,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   FormControl,
   FormControlLabel,
   InputLabel,
@@ -36,6 +41,7 @@ import {
   submitStoryForReview,
   unbookmarkStory,
   unlikeStory,
+  unvoteChapter,
   voteChapter,
 } from '../api/storyApi'
 import { ChapterCard } from '../components/ChapterCard'
@@ -51,8 +57,8 @@ const workflowSteps: StoryStatus[] = ['DRAFT', 'IN_REVIEW', 'PUBLISHED', 'ARCHIV
 const statusLabel: Record<StoryStatus, string> = {
   DRAFT: 'Brouillon',
   IN_REVIEW: 'En validation',
-  PUBLISHED: 'Publiee',
-  ARCHIVED: 'Archivee',
+  PUBLISHED: 'Publiée',
+  ARCHIVED: 'Archivée',
 }
 
 const statusDescription: Record<StoryStatus, string> = {
@@ -79,7 +85,7 @@ function getQualityMention(score: number) {
   if (score >= 40) {
     return 'Niveau moyen'
   }
-  return 'Niveau a renforcer'
+  return 'Niveau à renforcer'
 }
 
 function formatAuthorDisplay(authorName: string, authorRole?: 'USER' | 'REVIEWER' | 'ADMIN') {
@@ -123,6 +129,8 @@ export function StoryDetailPage() {
   const [liking, setLiking] = useState(false)
   const [bookmarked, setBookmarked] = useState(false)
   const [bookmarking, setBookmarking] = useState(false)
+  const [confirmVoteOpen, setConfirmVoteOpen] = useState(false)
+  const [pendingVoteChapterId, setPendingVoteChapterId] = useState<number | null>(null)
 
   const selectedChapter = useMemo(
     () => storyDetails?.chapters.find((chapter) => chapter.id === selectedChapterId) ?? null,
@@ -151,7 +159,11 @@ export function StoryDetailPage() {
   const canSubmitReview = Boolean(isAuthor && currentStatus === 'DRAFT')
   const canReviewStory = Boolean(isAuthenticated && !isAuthor && currentStatus === 'IN_REVIEW')
   const canArchiveStory = Boolean(isAuthenticated && currentStatus === 'PUBLISHED')
-  const canCreateNextChapter = Boolean(canAddChapter && currentStatus === 'DRAFT' && storyDetails?.canAddChapter)
+  const canCreateNextChapter = Boolean(
+    canAddChapter &&
+    (currentStatus === 'DRAFT' || currentStatus === 'PUBLISHED') &&
+    storyDetails?.canAddChapter,
+  )
 
   const loadStory = useCallback(async () => {
     if (!id) {
@@ -265,29 +277,69 @@ export function StoryDetailPage() {
     await loadComments(chapterId)
   }
 
-  async function handleVote(chapterId: number) {
-    if (!storyDetails) {
+  function handleVoteRequest(chapterId: number) {
+    if (!storyDetails) return
+    const chapter = storyDetails.chapters.find((c) => c.id === chapterId)
+    if (!chapter) return
+
+    const wouldBeDecisive = !chapter.votedByMe && chapter.voteCount + 1 >= chapter.threshold
+    if (wouldBeDecisive) {
+      setPendingVoteChapterId(chapterId)
+      setConfirmVoteOpen(true)
       return
     }
+
+    void handleVote(chapterId)
+  }
+
+  async function handleVote(chapterId: number) {
+    if (!storyDetails) return
 
     setVotingId(chapterId)
     try {
       const result = await voteChapter(chapterId)
-      setStoryDetails({
-        ...storyDetails,
-        chapters: storyDetails.chapters.map((chapter) =>
+      setStoryDetails((prev) => {
+        if (!prev) return prev
+        const updated = prev.chapters.map((chapter) =>
           chapter.id === chapterId
             ? {
-              ...chapter,
-              voteCount: chapter.voteCount + 1,
-              unlocked: chapter.unlocked || result.unlocked,
-            }
+                ...chapter,
+                voteCount: chapter.voteCount + 1,
+                unlocked: chapter.unlocked || result.unlocked,
+                votedByMe: true,
+                votingClosed: result.unlocked ? true : chapter.votingClosed,
+              }
             : chapter,
-        ),
+        )
+        const allUnlocked = updated.every((c) => c.voteCount >= c.threshold)
+        return { ...prev, chapters: updated, canAddChapter: allUnlocked }
       })
       void refreshQualityScore(storyDetails.story.id)
     } catch {
       setError('Vote impossible pour ce chapitre.')
+    } finally {
+      setVotingId(null)
+    }
+  }
+
+  async function handleUnvote(chapterId: number) {
+    if (!storyDetails) return
+
+    setVotingId(chapterId)
+    try {
+      await unvoteChapter(chapterId)
+      setStoryDetails((prev) => {
+        if (!prev) return prev
+        const updated = prev.chapters.map((chapter) =>
+          chapter.id === chapterId
+            ? { ...chapter, voteCount: Math.max(0, chapter.voteCount - 1), unlocked: false, votedByMe: false }
+            : chapter,
+        )
+        return { ...prev, chapters: updated, canAddChapter: false }
+      })
+      void refreshQualityScore(storyDetails.story.id)
+    } catch {
+      setError('Impossible de retirer le vote.')
     } finally {
       setVotingId(null)
     }
@@ -348,7 +400,7 @@ export function StoryDetailPage() {
         reason,
       })
       setReportReason('')
-      setReportMessage('Signalement envoye a la moderation.')
+      setReportMessage('Signalement envoyé à la modération.')
     } catch (err) {
       setReportMessage(getApiErrorMessage(err, 'Signalement impossible pour le moment.'))
     } finally {
@@ -448,7 +500,7 @@ export function StoryDetailPage() {
 
           <Paper variant="outlined" sx={{ p: 2 }}>
             <Typography variant="overline" color="text.secondary">
-              Etat de la story
+              État de la story
             </Typography>
             {loadingQuality ? (
               <Box sx={{ mt: 1.5 }}>
@@ -481,7 +533,7 @@ export function StoryDetailPage() {
         <Paper variant="outlined" sx={{ p: 2.2, borderRadius: 1 }}>
           <Typography variant="h6">Signaler cette histoire</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.4 }}>
-            En cas d'abus, spam ou contenu problematique, envoyez un signalement a l'equipe moderation.
+            En cas d'abus, spam ou contenu problématique, envoyez un signalement à l'équipe de modération.
           </Typography>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2} sx={{ mt: 1.2 }}>
             <TextField
@@ -521,7 +573,7 @@ export function StoryDetailPage() {
           {showAdvanced ? 'Masquer les details avances' : 'Afficher les details avances'}
         </Button>
         <Typography variant="body2" color="text.secondary" sx={{ px: 1, mt: 0.5 }}>
-          Mode optionnel pour moderation, publication et score interne.
+          Mode optionnel pour modération, publication et score interne.
         </Typography>
 
         <Collapse in={showAdvanced} timeout="auto" unmountOnExit>
@@ -627,7 +679,7 @@ export function StoryDetailPage() {
 
             {qualityScore && (
               <Paper variant="outlined" sx={{ p: 2 }}>
-                <Typography variant="h6">Indicateurs de qualite</Typography>
+                <Typography variant="h6">Indicateurs de qualité</Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.6 }}>
                   Score interne: {qualityScore.totalScore}/100 - {getQualityMention(qualityScore.totalScore)}
                 </Typography>
@@ -641,7 +693,7 @@ export function StoryDetailPage() {
                       {qualityScore.completenessScore}/40
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Progression et densite de la story.
+                      Progression et densité de la story.
                     </Typography>
                   </Paper>
 
@@ -676,13 +728,14 @@ export function StoryDetailPage() {
       </Paper>
 
       <section>
-        <SectionTitle title="Lecture des chapitres" subtitle="Suivez les chapitres deja publies et votez pour la suite." />
+        <SectionTitle title="Lecture des chapitres" subtitle="Suivez les chapitres déjà publiés et votez pour la suite." />
         <Stack spacing={2}>
           {storyDetails.chapters.map((chapter) => (
             <ChapterCard
               key={chapter.id}
               chapter={chapter}
-              onVote={handleVote}
+              onVote={(id) => { handleVoteRequest(id) }}
+              onUnvote={handleUnvote}
               votingId={votingId}
               disabled={!isAuthenticated}
             />
@@ -794,11 +847,11 @@ export function StoryDetailPage() {
         )}
       </Paper>
 
-      {canAddChapter && currentStatus === 'DRAFT' && hasLockedChapters && (
+      {canAddChapter && (currentStatus === 'DRAFT' || currentStatus === 'PUBLISHED') && hasLockedChapters && (
         <Paper variant="outlined" sx={{ p: { xs: 2, sm: 2.5 } }}>
           <Typography variant="h5">Prochain chapitre verrouille</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Vous pourrez ajouter un nouveau chapitre quand tous les chapitres precedents seront debloques.
+            Vous pourrez ajouter un nouveau chapitre quand tous les chapitres précédents seront débloqués.
             {lockedChapterCount > 0 ? ` Il reste ${lockedChapterCount} chapitre(s) a valider.` : ''}
           </Typography>
           <Button
@@ -812,6 +865,33 @@ export function StoryDetailPage() {
           </Button>
         </Paper>
       )}
+
+      <Dialog open={confirmVoteOpen} onClose={() => setConfirmVoteOpen(false)}>
+        <DialogTitle>Vote decisif</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Votre vote va atteindre le seuil requis et débloquer la suite de l'histoire.
+            Ce vote est <strong>irréversible</strong> — il ne pourra pas être retiré une fois confirmé.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmVoteOpen(false)} color="secondary">
+            Annuler
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setConfirmVoteOpen(false)
+              if (pendingVoteChapterId !== null) {
+                void handleVote(pendingVoteChapterId)
+                setPendingVoteChapterId(null)
+              }
+            }}
+          >
+            Confirmer mon vote
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {canCreateNextChapter && (
         <Paper variant="outlined" sx={{ p: { xs: 2, sm: 2.5 } }}>
@@ -843,9 +923,15 @@ export function StoryDetailPage() {
                     if (!prev) {
                       return prev
                     }
+                    const lastIndex = prev.chapters.length - 1
+                    const updatedChapters = prev.chapters.map((ch, i) =>
+                      i === lastIndex ? { ...ch, votingClosed: true } : ch,
+                    )
                     return {
                       ...prev,
-                      chapters: [...prev.chapters, created],
+                      story: { ...prev.story, status: 'DRAFT' },
+                      chapters: [...updatedChapters, created],
+                      canAddChapter: false,
                     }
                   })
                   void refreshQualityScore(storyDetails.story.id)

@@ -4,6 +4,7 @@ import type { ChapterDTO } from '../types'
 interface ChapterCardProps {
   chapter: ChapterDTO
   onVote: (chapterId: number) => Promise<void>
+  onUnvote: (chapterId: number) => Promise<void>
   votingId: number | null
   disabled?: boolean
 }
@@ -15,7 +16,7 @@ function truncateContent(content: string, limit: number) {
   return `${content.slice(0, limit)}...`
 }
 
-export function ChapterCard({ chapter, onVote, votingId, disabled = false }: ChapterCardProps) {
+export function ChapterCard({ chapter, onVote, onUnvote, votingId, disabled = false }: ChapterCardProps) {
   const remainingVotes = Math.max(0, chapter.threshold - chapter.voteCount)
 
   return (
@@ -54,19 +55,28 @@ export function ChapterCard({ chapter, onVote, votingId, disabled = false }: Cha
 
       <CardActions sx={{ justifyContent: 'space-between', px: { xs: 1.75, sm: 2 }, pb: { xs: 1.75, sm: 2 }, gap: 1, flexWrap: 'wrap' }}>
         <Typography variant="caption" color="text.secondary" fontWeight={600}>
-          {chapter.unlocked
-            ? 'Chapitre debloque'
-            : `Encore ${remainingVotes} vote${remainingVotes > 1 ? 's' : ''} pour debloquer`}
+          {chapter.votingClosed
+            ? 'Vote clôturé'
+            : chapter.unlocked
+              ? 'Chapitre débloqué'
+              : `Encore ${remainingVotes} vote${remainingVotes > 1 ? 's' : ''} pour débloquer`}
         </Typography>
         <Button
           type="button"
-          onClick={() => void onVote(chapter.id)}
-          disabled={disabled || votingId === chapter.id}
-          variant="contained"
+          onClick={() => void (chapter.votedByMe ? onUnvote(chapter.id) : onVote(chapter.id))}
+          disabled={disabled || votingId === chapter.id || chapter.votingClosed}
+          variant={chapter.votedByMe ? 'outlined' : 'contained'}
+          color={chapter.votedByMe ? 'secondary' : 'primary'}
           size="small"
           sx={{ width: { xs: '100%', sm: 'auto' } }}
         >
-          {votingId === chapter.id ? 'Vote...' : 'Voter'}
+          {chapter.votingClosed
+            ? 'Vote clôturé'
+            : votingId === chapter.id
+              ? '...'
+              : chapter.votedByMe
+                ? 'Retirer mon vote'
+                : 'Voter'}
         </Button>
       </CardActions>
     </Card>

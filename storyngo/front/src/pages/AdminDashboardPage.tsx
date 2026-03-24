@@ -77,10 +77,10 @@ export function AdminDashboardPage() {
       return
     }
 
-    const daysRaw = window.prompt('Duree du ban (en jours, ex: 7):', '7')
+    const daysRaw = window.prompt('Durée du ban (en jours, ex: 7):', '7')
     const durationDays = Number(daysRaw)
     if (!Number.isFinite(durationDays) || durationDays < 1) {
-      setError('Duree de ban invalide.')
+      setError('Durée de ban invalide.')
       return
     }
 
@@ -97,7 +97,7 @@ export function AdminDashboardPage() {
   }
 
   async function handlePermanentBan(targetUser: AdminUserOverviewDTO) {
-    const reason = window.prompt(`Motif du ban definitif pour ${targetUser.pseudo}:`)
+    const reason = window.prompt(`Motif du ban définitif pour ${targetUser.pseudo}:`)
     if (!reason || reason.trim().length === 0) {
       return
     }
@@ -121,7 +121,7 @@ export function AdminDashboardPage() {
       await unbanUser(targetUser.id)
       await loadDashboard()
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Deban impossible.'))
+      setError(getApiErrorMessage(err, 'Débannissement impossible.'))
     } finally {
       setUpdatingUserId(null)
     }
@@ -160,7 +160,7 @@ export function AdminDashboardPage() {
       await quickUpdateReportStatus(report.id, targetStatus, note ?? undefined)
       await loadDashboard()
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Mise a jour du signalement impossible.'))
+      setError(getApiErrorMessage(err, 'Mise à jour du signalement impossible.'))
     } finally {
       setUpdatingReportId(null)
     }
@@ -266,7 +266,7 @@ export function AdminDashboardPage() {
   }
 
   if (loading) {
-    return <LoadingState label="Chargement admin..." description="Recuperation des utilisateurs et statistiques." />
+    return <LoadingState label="Chargement admin..." description="Récupération des utilisateurs et statistiques." />
   }
 
   return (
@@ -293,11 +293,11 @@ export function AdminDashboardPage() {
       {error && <Alert severity="error">{error}</Alert>}
 
       <section>
-        <SectionTitle title="Histoires a valider" subtitle="Stories en attente de review" />
+        <SectionTitle title="Histoires à valider" subtitle="Stories en attente de review" />
         {pendingStories.length === 0 ? (
           <EmptyState
             title="Aucune histoire en attente"
-            description="La file de moderation est vide."
+            description="La file de modération est vide."
             actionLabel="Actualiser"
             onAction={() => void loadDashboard()}
           />
@@ -317,7 +317,7 @@ export function AdminDashboardPage() {
       {users.length === 0 ? (
         <EmptyState
           title="Aucun utilisateur"
-          description="Les comptes crees apparaitront dans cette vue d'administration."
+          description="Les comptes créés apparaîtront dans cette vue d'administration."
           actionLabel="Actualiser"
           onAction={() => void loadDashboard()}
         />
@@ -374,7 +374,7 @@ export function AdminDashboardPage() {
                   onClick={() => void handlePermanentBan(user)}
                   disabled={updatingUserId === user.id}
                 >
-                  Ban definitif
+                  Ban définitif
                 </Button>
                 <Button
                   size="small"
@@ -382,7 +382,7 @@ export function AdminDashboardPage() {
                   onClick={() => void handleUnban(user)}
                   disabled={updatingUserId === user.id || user.accountStatus === 'ACTIVE'}
                 >
-                  Debannir
+                  Débannir
                 </Button>
               </Stack>
             </Paper>
@@ -398,7 +398,7 @@ export function AdminDashboardPage() {
       >
         <Paper variant="outlined" sx={{ p: 3, borderRadius: 1 }}>
           <Typography variant="h5" sx={{ mb: 1.5 }}>
-            Signalements priorises
+            Signalements priorisés
           </Typography>
           {reports.length === 0 ? (
             <Typography color="text.secondary">Aucun signalement ouvert.</Typography>
@@ -433,7 +433,7 @@ export function AdminDashboardPage() {
                       onClick={() => void handleReportStatus(report, 'RESOLVED')}
                       disabled={updatingReportId === report.id}
                     >
-                      Resolu
+                      Résolu
                     </Button>
                     <Button
                       size="small"
@@ -456,7 +456,7 @@ export function AdminDashboardPage() {
             Journal d'Audit administratif
           </Typography>
           {auditLogs.length === 0 ? (
-            <Typography color="text.secondary">Aucune action admin journalisee.</Typography>
+            <Typography color="text.secondary">Aucune action admin journalisée.</Typography>
           ) : (
             <Stack spacing={1}>
               {auditLogs.slice(0, 20).map((log) => (

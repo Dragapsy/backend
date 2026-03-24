@@ -186,7 +186,7 @@ export function ReviewerDashboardPage() {
   }
 
   if (loading) {
-    return <LoadingState label="Chargement reviewer..." description="Recuperation des stories a traiter." />
+    return <LoadingState label="Chargement reviewer..." description="Récupération des stories à traiter." />
   }
 
   return (
@@ -212,7 +212,7 @@ export function ReviewerDashboardPage() {
           Validation des histoires
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mt: 1.2 }}>
-          Traitez les histoires en attente avec une vue claire des contenus valides.
+          Traitez les histoires en attente avec une vue claire des contenus validés.
         </Typography>
       </Paper>
 
@@ -223,7 +223,7 @@ export function ReviewerDashboardPage() {
         {pendingStories.length === 0 ? (
           <EmptyState
             title="Aucune histoire en attente"
-            description="La file de moderation est vide pour le moment."
+            description="La file de modération est vide pour le moment."
             actionLabel="Actualiser"
             onAction={() => void loadDashboard()}
           />
@@ -235,11 +235,11 @@ export function ReviewerDashboardPage() {
       </section>
 
       <section>
-        <SectionTitle title="Histoires validees" subtitle="Contenus deja publies" />
+        <SectionTitle title="Histoires validées" subtitle="Contenus déjà publiés" />
         {validatedStories.length === 0 ? (
           <EmptyState
-            title="Aucune histoire validee"
-            description="Les histoires approuvees apparaitront ici."
+            title="Aucune histoire validée"
+            description="Les histoires approuvées apparaîtront ici."
             actionLabel="Actualiser"
             onAction={() => void loadDashboard()}
           />
@@ -251,11 +251,11 @@ export function ReviewerDashboardPage() {
       </section>
 
       <section>
-        <SectionTitle title="Signalements ouverts" subtitle="Contenus signales par les utilisateurs" />
+        <SectionTitle title="Signalements ouverts" subtitle="Contenus signalés par les utilisateurs" />
         {flaggedReports.length === 0 ? (
           <EmptyState
             title="Aucun signalement ouvert"
-            description="Aucun contenu signale pour le moment."
+            description="Aucun contenu signalé pour le moment."
             actionLabel="Actualiser"
             onAction={() => void loadDashboard()}
           />
@@ -272,7 +272,7 @@ export function ReviewerDashboardPage() {
                       {report.reason}
                     </Typography>
                     <Typography variant="caption" color="text.disabled">
-                      Signale par {report.reporterPseudo} · Priorite : {report.priority}
+                      Signalé par {report.reporterPseudo} · Priorité : {report.priority}
                     </Typography>
                   </Box>
                   <Typography

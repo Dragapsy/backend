@@ -28,7 +28,7 @@ export function RegisterPage() {
         setError('Les mots de passe ne correspondent pas.')
         return
       }
-      setError('Completez correctement le formulaire pour continuer.')
+      setError('Complétez correctement le formulaire pour continuer.')
       return
     }
 
@@ -54,11 +54,11 @@ export function RegisterPage() {
     <Paper variant="outlined" sx={{ mx: 'auto', maxWidth: 560, p: { xs: 3, md: 4 } }}>
       <Typography variant="h4">Inscription</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-        Creez votre compte pour publier des stories et des chapitres.
+        Créez votre compte pour publier des stories et des chapitres.
       </Typography>
 
       {error && <Box sx={{ mt: 2 }}><ErrorBanner message={error} compact /></Box>}
-      {loading && <Box sx={{ mt: 2 }}><LoadingState label="Creation du compte..." compact /></Box>}
+      {loading && <Box sx={{ mt: 2 }}><LoadingState label="Création du compte..." compact /></Box>}
 
       <Stack component="form" spacing={2} sx={{ mt: 3 }} onSubmit={handleSubmit}>
         <TextField
@@ -68,7 +68,7 @@ export function RegisterPage() {
           value={pseudo}
           onChange={(event) => setPseudo(event.target.value)}
           placeholder="DragonWriter"
-          helperText={`${pseudo.length}/30 caracteres`}
+          helperText={`${pseudo.length}/30 caractères`}
           fullWidth
         />
 
@@ -89,8 +89,8 @@ export function RegisterPage() {
           inputProps={{ minLength: 8, maxLength: 72 }}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          placeholder="Minimum 8 caracteres"
-          helperText="Au moins 8 caracteres"
+          placeholder="Minimum 8 caractères"
+          helperText="Au moins 8 caractères"
           fullWidth
         />
 
@@ -103,17 +103,17 @@ export function RegisterPage() {
           onChange={(event) => setConfirmPassword(event.target.value)}
           placeholder="Retapez votre mot de passe"
           error={isPasswordMismatch}
-          helperText={isPasswordMismatch ? 'Les mots de passe doivent etre identiques' : 'Repetez le mot de passe'}
+          helperText={isPasswordMismatch ? 'Les mots de passe doivent être identiques' : 'Répétez le mot de passe'}
           fullWidth
         />
 
         <Button type="submit" disabled={loading || !isFormReady} variant="contained" size="large" fullWidth>
-          {loading ? 'Inscription...' : 'Creer mon compte'}
+          {loading ? 'Inscription...' : 'Créer mon compte'}
         </Button>
       </Stack>
 
       <Typography variant="body2" color="text.secondary" sx={{ mt: 2.5 }}>
-        Deja inscrit ? <Link to="/login">Se connecter</Link>
+        Déjà inscrit ? <Link to="/login">Se connecter</Link>
       </Typography>
     </Paper>
   )

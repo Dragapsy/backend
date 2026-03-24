@@ -12,5 +12,7 @@ public interface VoteRepository extends JpaRepository<Vote, Long> {
     long countByStoryId(Long storyId);
 
     boolean existsByUserIdAndChapterId(Long userId, Long chapterId);
+
+    java.util.Optional<Vote> findByUserIdAndChapterId(Long userId, Long chapterId);
 }
 

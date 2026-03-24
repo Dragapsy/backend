@@ -106,7 +106,7 @@ public class StoryService {
     }
 
     @Transactional(readOnly = true)
-    public StoryDetailsDTO getStoryDetails(Long id) {
+    public StoryDetailsDTO getStoryDetails(Long id, User currentUser) {
         Story story = storyRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
 
@@ -118,7 +118,9 @@ public class StoryService {
                 .map(chapter -> {
                     long voteCount = voteRepository.countByChapterId(chapter.getId());
                     boolean isUnlocked = voteCount >= chapter.getVoteThreshold();
-                    return chapterMapper.toDto(chapter, voteCount, isUnlocked);
+                    boolean votedByMe = currentUser != null &&
+                            voteRepository.existsByUserIdAndChapterId(currentUser.getId(), chapter.getId());
+                    return chapterMapper.toDto(chapter, voteCount, isUnlocked, votedByMe);
                 })
                 .toList();
 
@@ -131,14 +133,18 @@ public class StoryService {
 
     @Transactional
     public boolean voteForChapter(Long userId, Long chapterId) {
+        Chapter chapter = chapterRepository.findById(chapterId)
+                .orElseThrow(() -> new ResourceNotFoundException("Chapter not found."));
+
+        if (Boolean.TRUE.equals(chapter.getVotingClosed())) {
+            throw new ConflictException("Voting is closed for this chapter.");
+        }
         if (voteRepository.existsByUserIdAndChapterId(userId, chapterId)) {
             throw new ConflictException("Vote already exists for this user and chapter.");
         }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found."));
-        Chapter chapter = chapterRepository.findById(chapterId)
-                .orElseThrow(() -> new ResourceNotFoundException("Chapter not found."));
 
         Vote vote = Vote.builder()
                 .user(user)
@@ -149,7 +155,28 @@ public class StoryService {
         gamificationService.awardXp(user, "VOTE_CHAPTER", 3, "CHAPTER", chapterId);
 
         long voteCount = voteRepository.countByChapterId(chapterId);
-        return voteCount >= chapter.getVoteThreshold();
+        boolean unlocked = voteCount >= chapter.getVoteThreshold();
+
+        if (unlocked) {
+            chapter.setVotingClosed(true);
+            chapterRepository.save(chapter);
+        }
+
+        return unlocked;
+    }
+
+    @Transactional
+    public void unvoteChapter(Long userId, Long chapterId) {
+        Chapter chapter = chapterRepository.findById(chapterId)
+                .orElseThrow(() -> new ResourceNotFoundException("Chapter not found."));
+
+        if (Boolean.TRUE.equals(chapter.getVotingClosed())) {
+            throw new ConflictException("Voting is closed for this chapter.");
+        }
+
+        Vote vote = voteRepository.findByUserIdAndChapterId(userId, chapterId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vote not found."));
+        voteRepository.delete(vote);
     }
 
     @Transactional(readOnly = true)
@@ -167,7 +194,7 @@ public class StoryService {
                 .map(chapter -> {
                     long voteCount = voteRepository.countByChapterId(chapter.getId());
                     boolean isUnlocked = voteCount >= chapter.getVoteThreshold();
-                    return chapterMapper.toDto(chapter, voteCount, isUnlocked);
+                    return chapterMapper.toDto(chapter, voteCount, isUnlocked, false);
                 })
                 .toList();
     }
@@ -205,7 +232,7 @@ public class StoryService {
         createVersionSnapshot(savedChapter);
 
         StoryDTO storyDto = toStoryDto(savedStory);
-        ChapterDTO chapterDto = chapterMapper.toDto(savedChapter, 0L, false);
+        ChapterDTO chapterDto = chapterMapper.toDto(savedChapter, 0L, false, false);
 
         gamificationService.awardXp(author, "CREATE_STORY", 80, "STORY", savedStory.getId());
         gamificationService.awardXp(author, "CREATE_CHAPTER", 35, "CHAPTER", savedChapter.getId());
@@ -256,8 +283,17 @@ public class StoryService {
 
         Chapter saved = chapterRepository.save(chapter);
         createVersionSnapshot(saved);
+
+        lastChapter.setVotingClosed(true);
+        chapterRepository.save(lastChapter);
+
+        if (story.getStatus() == StoryStatus.PUBLISHED) {
+            story.setStatus(StoryStatus.DRAFT);
+            storyRepository.save(story);
+        }
+
         gamificationService.awardXp(author, "ADD_CHAPTER", 35, "CHAPTER", saved.getId());
-        return chapterMapper.toDto(saved, 0L, false);
+        return chapterMapper.toDto(saved, 0L, false, false);
     }
 
     @Transactional
@@ -285,7 +321,7 @@ public class StoryService {
 
         long voteCount = voteRepository.countByChapterId(savedChapter.getId());
         boolean isUnlocked = voteCount >= savedChapter.getVoteThreshold();
-        return chapterMapper.toDto(savedChapter, voteCount, isUnlocked);
+        return chapterMapper.toDto(savedChapter, voteCount, isUnlocked, false);
     }
 
     @Transactional(readOnly = true)
@@ -325,7 +361,7 @@ public class StoryService {
 
         long voteCount = voteRepository.countByChapterId(savedChapter.getId());
         boolean isUnlocked = voteCount >= savedChapter.getVoteThreshold();
-        return chapterMapper.toDto(savedChapter, voteCount, isUnlocked);
+        return chapterMapper.toDto(savedChapter, voteCount, isUnlocked, false);
     }
 
     @Transactional

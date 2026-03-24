@@ -19,7 +19,11 @@ public record ChapterDTO(
     @Schema(description = "Limite de caracteres", example = "2000")
     Integer charLimit,
     @Schema(description = "Indique si chapitre debloque", example = "false")
-    boolean isUnlocked
+    boolean isUnlocked,
+    @Schema(description = "Indique si l'utilisateur connecte a vote pour ce chapitre", example = "false")
+    boolean votedByMe,
+    @Schema(description = "Indique si le vote est cloture (chapitre suivant deja ecrit)", example = "false")
+    boolean votingClosed
 ) {
 }
 

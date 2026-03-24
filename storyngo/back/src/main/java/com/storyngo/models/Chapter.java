@@ -56,5 +56,9 @@ public class Chapter {
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean votingClosed = false;
 }
 

@@ -159,7 +159,8 @@ export async function getUpcomingChapters(): Promise<ChapterDTO[]> {
 }
 
 export async function getStoryDetails(storyId: number): Promise<StoryDetailsDTO> {
-  const response = await publicApiClient.get<StoryDetailsDTO>(`/stories/${storyId}`)
+  const client = localStorage.getItem('storyngo_token') ? apiClient : publicApiClient
+  const response = await client.get<StoryDetailsDTO>(`/stories/${storyId}`)
   return response.data
 }
 
@@ -191,6 +192,10 @@ export async function addComment(chapterId: number, request: CommentCreateReques
 export async function voteChapter(chapterId: number): Promise<VoteResultDTO> {
   const response = await apiClient.post<VoteResultDTO>(`/chapters/${chapterId}/vote`)
   return response.data
+}
+
+export async function unvoteChapter(chapterId: number): Promise<void> {
+  await apiClient.delete(`/chapters/${chapterId}/vote`)
 }
 
 export async function submitStoryForReview(storyId: number): Promise<StoryDTO> {

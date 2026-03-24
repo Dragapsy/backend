@@ -102,14 +102,29 @@ public class StoryController {
         return new VoteResultDTO(unlocked);
     }
 
+    @DeleteMapping("/chapters/{id}/vote")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Retirer son vote d'un chapitre")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Vote retire"),
+            @ApiResponse(responseCode = "401", description = "Non authentifie", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Vote introuvable", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public void unvoteChapter(@AuthenticationPrincipal Object principal, @PathVariable Long id) {
+        Long userId = extractUserId(principal);
+        storyService.unvoteChapter(userId, id);
+    }
+
     @GetMapping("/stories/{id}")
     @Operation(summary = "Recuperer le detail d'une story")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Detail de la story", content = @Content(schema = @Schema(implementation = StoryDetailsDTO.class))),
             @ApiResponse(responseCode = "404", description = "Story introuvable", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public StoryDetailsDTO getStoryDetails(@PathVariable Long id) {
-        return storyService.getStoryDetails(id);
+    public StoryDetailsDTO getStoryDetails(@AuthenticationPrincipal Object principal, @PathVariable Long id) {
+        User currentUser = principal instanceof User u ? u : null;
+        return storyService.getStoryDetails(id, currentUser);
     }
 
     @GetMapping("/stories/{id}/quality-score")

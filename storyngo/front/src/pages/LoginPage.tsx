@@ -23,7 +23,7 @@ export function LoginPage() {
     event.preventDefault()
 
     if (!isFormReady) {
-      setError('Entrez un email valide et un mot de passe de 8 caracteres minimum.')
+      setError('Entrez un email valide et un mot de passe de 8 caractères minimum.')
       return
     }
 
@@ -79,7 +79,7 @@ export function LoginPage() {
 
       <Typography variant="body2" color="text.secondary" sx={{ mt: 2.5 }}>
         Pas encore de compte ?{' '}
-        <Link to="/register">Creer un compte</Link>
+        <Link to="/register">Créer un compte</Link>
       </Typography>
     </Paper>
   )

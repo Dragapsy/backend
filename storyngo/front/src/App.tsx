@@ -2,6 +2,7 @@ import { BookOpenText } from 'lucide-react'
 import AddIcon from '@mui/icons-material/Add'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder'
+import EditNoteIcon from '@mui/icons-material/EditNote'
 import DashboardCustomizeIcon from '@mui/icons-material/DashboardCustomize'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import LoginIcon from '@mui/icons-material/Login'
@@ -12,6 +13,7 @@ import type { ReactElement } from 'react'
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useUser } from './context/UserContext'
 import { CreateStoryPage } from './pages/CreateStoryPage'
+import { DraftsPage } from './pages/DraftsPage'
 import { FavoritesPage } from './pages/FavoritesPage'
 import { HomePage } from './pages/HomePage'
 import { ListeStoriesPage } from './pages/ListeStoriesPage'
@@ -179,6 +181,16 @@ function App() {
                   </Button>
                   <Button
                     component={Link}
+                    to="/me/brouillons"
+                    variant="outlined"
+                    startIcon={<EditNoteIcon />}
+                    size="small"
+                    sx={{ minWidth: { xs: 'calc(50% - 4px)', md: 0 } }}
+                  >
+                    Brouillons
+                  </Button>
+                  <Button
+                    component={Link}
                     to="/dashboard/user"
                     variant="outlined"
                     startIcon={<AccountCircleIcon />}
@@ -195,7 +207,7 @@ function App() {
                     size="small"
                     sx={{ minWidth: { xs: 'calc(50% - 4px)', md: 0 } }}
                   >
-                    Creer
+                    Créer
                   </Button>
                   <Button
                     variant="outlined"
@@ -306,6 +318,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <FavoritesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/me/brouillons"
+              element={
+                <ProtectedRoute>
+                  <DraftsPage />
                 </ProtectedRoute>
               }
             />

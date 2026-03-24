@@ -12,7 +12,9 @@ public interface ChapterMapper {
     @Mapping(target = "threshold", source = "chapter.voteThreshold")
     @Mapping(target = "voteCount", source = "voteCount")
     @Mapping(target = "isUnlocked", source = "isUnlocked")
-    ChapterDTO toDto(Chapter chapter, long voteCount, boolean isUnlocked);
+    @Mapping(target = "votedByMe", source = "votedByMe")
+    @Mapping(target = "votingClosed", source = "chapter.votingClosed")
+    ChapterDTO toDto(Chapter chapter, long voteCount, boolean isUnlocked, boolean votedByMe);
 
     default String resolveAuthorName(Chapter chapter) {
         if (Boolean.TRUE.equals(chapter.getIsAnonymous())) {

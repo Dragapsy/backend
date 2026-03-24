@@ -50,6 +50,7 @@ export function UserDashboardPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [editMode, setEditMode] = useState(false)
   const [archivedStories, setArchivedStories] = useState<StoryDTO[]>([])
+  const [draftStories, setDraftStories] = useState<StoryDTO[]>([])
   useEffect(() => {
     async function loadProfile() {
       setLoading(true)
@@ -71,11 +72,8 @@ export function UserDashboardPage() {
         setXpHistory(xpEvents)
         const myStories = await getMyStories()
 
-        const archived = myStories.filter(
-          (story) => story.status === 'ARCHIVED'
-        )
-
-        setArchivedStories(archived)
+        setDraftStories(myStories.filter((story) => story.status === 'DRAFT'))
+        setArchivedStories(myStories.filter((story) => story.status === 'ARCHIVED'))
       } catch {
         setError('Impossible de charger votre profil pour le moment.')
       } finally {
@@ -621,6 +619,25 @@ export function UserDashboardPage() {
           </Stack>
         )}
       </Paper>
+      <Paper variant="outlined" sx={{ p: 3, borderRadius: 1 }}>
+        <Typography variant="h6" sx={{ mb: 0.5 }}>
+          Mes brouillons
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+          Histoires créées mais pas encore soumises à la review.
+        </Typography>
+
+        {draftStories.length === 0 ? (
+          <Typography color="text.secondary">
+            Aucun brouillon en cours.
+          </Typography>
+        ) : (
+          <Box sx={{ display: 'grid', gap: 1.5 }}>
+            {draftStories.map(renderCompactStoryCard)}
+          </Box>
+        )}
+      </Paper>
+
       <Paper variant="outlined" sx={{ p: 3, borderRadius: 1 }}>
         <Typography variant="h6" sx={{ mb: 1.5 }}>
           Mes histoires archivées
