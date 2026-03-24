@@ -230,3 +230,16 @@ export async function getStoryLikes(storyId: number): Promise<{ likeCount: numbe
   const response = await client.get<{ likeCount: number; likedByMe: boolean }>(`/stories/${storyId}/likes`)
   return response.data
 }
+
+export async function bookmarkStory(storyId: number): Promise<void> {
+  await apiClient.post(`/stories/${storyId}/bookmark`)
+}
+
+export async function unbookmarkStory(storyId: number): Promise<void> {
+  await apiClient.delete(`/stories/${storyId}/bookmark`)
+}
+
+export async function getMyBookmarks(): Promise<StoryDTO[]> {
+  const response = await apiClient.get<StoryDTO[]>('/me/bookmarks')
+  return response.data
+}

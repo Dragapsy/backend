@@ -25,6 +25,7 @@ import {
   addComment,
   approveStoryReview,
   archiveStory,
+  bookmarkStory,
   createReport,
   getComments,
   getStoryDetails,
@@ -33,6 +34,7 @@ import {
   likeStory,
   rejectStoryReview,
   submitStoryForReview,
+  unbookmarkStory,
   unlikeStory,
   voteChapter,
 } from '../api/storyApi'
@@ -119,6 +121,8 @@ export function StoryDetailPage() {
   const [likeCount, setLikeCount] = useState(0)
   const [liked, setLiked] = useState(false)
   const [liking, setLiking] = useState(false)
+  const [bookmarked, setBookmarked] = useState(false)
+  const [bookmarking, setBookmarking] = useState(false)
 
   const selectedChapter = useMemo(
     () => storyDetails?.chapters.find((chapter) => chapter.id === selectedChapterId) ?? null,
@@ -147,7 +151,7 @@ export function StoryDetailPage() {
   const canSubmitReview = Boolean(isAuthor && currentStatus === 'DRAFT')
   const canReviewStory = Boolean(isAuthenticated && !isAuthor && currentStatus === 'IN_REVIEW')
   const canArchiveStory = Boolean(isAuthenticated && currentStatus === 'PUBLISHED')
-  const canCreateNextChapter = Boolean(canAddChapter && currentStatus === 'DRAFT' && !hasLockedChapters)
+  const canCreateNextChapter = Boolean(canAddChapter && currentStatus === 'DRAFT' && storyDetails?.canAddChapter)
 
   const loadStory = useCallback(async () => {
     if (!id) {
@@ -219,6 +223,25 @@ export function StoryDetailPage() {
       setLiking(false)
     }
   }
+  async function handleBookmarkStory() {
+    if (!storyDetails) return
+
+    setBookmarking(true)
+    try {
+      if (bookmarked) {
+        await unbookmarkStory(storyDetails.story.id)
+        setBookmarked(false)
+      } else {
+        await bookmarkStory(storyDetails.story.id)
+        setBookmarked(true)
+      }
+    } catch {
+      setError('Impossible de mettre a jour le favori de cette story.')
+    } finally {
+      setBookmarking(false)
+    }
+  }
+
   async function loadComments(chapterId: number) {
     setLoadingComments(true)
     setCommentsError(null)
@@ -395,6 +418,19 @@ export function StoryDetailPage() {
               <Typography variant="body2" color="text.secondary">
                 {likeCount} like{likeCount > 1 ? 's' : ''}
               </Typography>
+
+              {isAuthenticated && (
+                <Button
+                  variant={bookmarked ? 'contained' : 'outlined'}
+                  color="warning"
+                  disabled={bookmarking}
+                  onClick={() => {
+                    void handleBookmarkStory()
+                  }}
+                >
+                  {bookmarking ? '...' : bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                </Button>
+              )}
             </Stack>
             <Typography variant="body1" color="text.secondary" sx={{ mt: 1.4, maxWidth: 820 }}>
               {storyDetails.story.summary}

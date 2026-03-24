@@ -331,6 +331,47 @@ public class StoryController {
         return reportService.createReport(user, request);
     }
 
+    @PostMapping("/stories/{id}/bookmark")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Mettre une story en favori")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Favori enregistre"),
+            @ApiResponse(responseCode = "409", description = "Deja en favori", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Non authentifie", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Story introuvable", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public void bookmarkStory(@AuthenticationPrincipal Object principal, @PathVariable Long id) {
+        User user = requireUser(principal);
+        storyService.bookmarkStory(user, id);
+    }
+
+    @DeleteMapping("/stories/{id}/bookmark")
+    @Operation(summary = "Retirer une story des favoris")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Favori supprime"),
+            @ApiResponse(responseCode = "401", description = "Non authentifie", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Story ou favori introuvable", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unbookmarkStory(@AuthenticationPrincipal Object principal, @PathVariable Long id) {
+        User user = requireUser(principal);
+        storyService.unbookmarkStory(user, id);
+    }
+
+    @GetMapping("/me/bookmarks")
+    @Operation(summary = "Recuperer les stories favorites de l'utilisateur connecte")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Liste des stories favorites", content = @Content(schema = @Schema(implementation = StoryDTO.class))),
+            @ApiResponse(responseCode = "401", description = "Non authentifie", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public List<StoryDTO> getMyBookmarks(@AuthenticationPrincipal Object principal) {
+        User user = requireUser(principal);
+        return storyService.getBookmarkedStories(user);
+    }
+
     private Long extractUserId(Object principal) {
         if (principal instanceof User user) {
             return user.getId();

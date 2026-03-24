@@ -28,6 +28,7 @@ import com.storyngo.models.User;
 import com.storyngo.repositories.ChapterRepository;
 import com.storyngo.repositories.ChapterVersionRepository;
 import com.storyngo.repositories.CommentRepository;
+import com.storyngo.repositories.StoryBookmarkRepository;
 import com.storyngo.repositories.StoryLikeRepository;
 import com.storyngo.repositories.StoryRepository;
 import com.storyngo.repositories.UserRepository;
@@ -67,6 +68,9 @@ class StoryServiceTests {
     private StoryLikeRepository storyLikeRepository;
 
     @Mock
+    private StoryBookmarkRepository storyBookmarkRepository;
+
+    @Mock
     private StoryMapper storyMapper;
 
     @Mock
@@ -87,6 +91,7 @@ class StoryServiceTests {
             commentRepository,
             userRepository,
             storyLikeRepository,
+            storyBookmarkRepository,
             storyMapper,
             chapterMapper,
             new ModerationService(),

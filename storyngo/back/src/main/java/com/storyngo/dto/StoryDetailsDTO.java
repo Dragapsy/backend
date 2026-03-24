@@ -8,7 +8,8 @@ public record StoryDetailsDTO(
     @Schema(description = "Informations de la story")
     StoryDTO story,
     @Schema(description = "Liste ordonnee des chapitres")
-    List<ChapterDTO> chapters
+    List<ChapterDTO> chapters,
+    @Schema(description = "Indique si l'auteur peut ajouter un nouveau chapitre (dernier chapitre debloque)", example = "true")
+    boolean canAddChapter
 ) {
 }
-

@@ -1,6 +1,7 @@
 import { BookOpenText } from 'lucide-react'
 import AddIcon from '@mui/icons-material/Add'
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'
+import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder'
 import DashboardCustomizeIcon from '@mui/icons-material/DashboardCustomize'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import LoginIcon from '@mui/icons-material/Login'
@@ -11,6 +12,7 @@ import type { ReactElement } from 'react'
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useUser } from './context/UserContext'
 import { CreateStoryPage } from './pages/CreateStoryPage'
+import { FavoritesPage } from './pages/FavoritesPage'
 import { HomePage } from './pages/HomePage'
 import { ListeStoriesPage } from './pages/ListeStoriesPage'
 import { LoginPage } from './pages/LoginPage'
@@ -167,6 +169,16 @@ function App() {
                   </Button>
                   <Button
                     component={Link}
+                    to="/me/favoris"
+                    variant="outlined"
+                    startIcon={<BookmarkBorderIcon />}
+                    size="small"
+                    sx={{ minWidth: { xs: 'calc(50% - 4px)', md: 0 } }}
+                  >
+                    Mes Favoris
+                  </Button>
+                  <Button
+                    component={Link}
                     to="/dashboard/user"
                     variant="outlined"
                     startIcon={<AccountCircleIcon />}
@@ -289,6 +301,14 @@ function App() {
               }
             />
             <Route path="/stories/:id" element={<StoryDetailPage />} />
+            <Route
+              path="/me/favoris"
+              element={
+                <ProtectedRoute>
+                  <FavoritesPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/login"
               element={

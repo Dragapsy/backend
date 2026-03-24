@@ -17,6 +17,7 @@ import com.storyngo.mappers.StoryMapper;
 import com.storyngo.models.Chapter;
 import com.storyngo.models.ChapterVersion;
 import com.storyngo.models.Story;
+import com.storyngo.models.StoryBookmark;
 import com.storyngo.models.StoryLike;
 import com.storyngo.models.StoryStatus;
 import com.storyngo.models.User;
@@ -24,6 +25,7 @@ import com.storyngo.models.Vote;
 import com.storyngo.repositories.ChapterRepository;
 import com.storyngo.repositories.ChapterVersionRepository;
 import com.storyngo.repositories.CommentRepository;
+import com.storyngo.repositories.StoryBookmarkRepository;
 import com.storyngo.repositories.StoryLikeRepository;
 import com.storyngo.repositories.StoryRepository;
 import com.storyngo.repositories.UserRepository;
@@ -64,6 +66,7 @@ public class StoryService {
     private final StoryPermissionService storyPermissionService;
     private final GamificationService gamificationService;
     private final StoryLikeRepository storyLikeRepository;
+    private final StoryBookmarkRepository storyBookmarkRepository;
 
     public StoryService(
             StoryRepository storyRepository,
@@ -73,6 +76,7 @@ public class StoryService {
             CommentRepository commentRepository,
             UserRepository userRepository,
             StoryLikeRepository storyLikeRepository,
+            StoryBookmarkRepository storyBookmarkRepository,
             StoryMapper storyMapper,
             ChapterMapper chapterMapper,
             ModerationService moderationService,
@@ -85,6 +89,7 @@ public class StoryService {
         this.commentRepository = commentRepository;
         this.userRepository = userRepository;
         this.storyLikeRepository = storyLikeRepository;
+        this.storyBookmarkRepository = storyBookmarkRepository;
         this.storyMapper = storyMapper;
         this.chapterMapper = chapterMapper;
         this.moderationService = moderationService;
@@ -117,7 +122,11 @@ public class StoryService {
                 })
                 .toList();
 
-        return new StoryDetailsDTO(toStoryDto(story), chapters);
+        boolean canAddChapter = !orderedChapters.isEmpty() &&
+                orderedChapters.stream().allMatch(chapter ->
+                        voteRepository.countByChapterId(chapter.getId()) >= chapter.getVoteThreshold());
+
+        return new StoryDetailsDTO(toStoryDto(story), chapters, canAddChapter);
     }
 
     @Transactional
@@ -200,7 +209,7 @@ public class StoryService {
 
         gamificationService.awardXp(author, "CREATE_STORY", 80, "STORY", savedStory.getId());
         gamificationService.awardXp(author, "CREATE_CHAPTER", 35, "CHAPTER", savedChapter.getId());
-        return new StoryDetailsDTO(storyDto, java.util.List.of(chapterDto));
+        return new StoryDetailsDTO(storyDto, java.util.List.of(chapterDto), false);
     }
 
     @Transactional
@@ -487,6 +496,55 @@ public class StoryService {
                 chapterCount,
                 voteCount,
                 commentCount);
+    }
+
+    @Transactional
+    public void bookmarkStory(User user, Long storyId) {
+        if (user == null) {
+            throw new UnauthorizedException("Authenticated user is required.");
+        }
+
+        Story story = storyRepository.findById(storyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
+
+        if (storyBookmarkRepository.existsByUserIdAndStoryId(user.getId(), storyId)) {
+            throw new ConflictException("Story already bookmarked.");
+        }
+
+        StoryBookmark bookmark = StoryBookmark.builder()
+                .user(user)
+                .story(story)
+                .createdAt(java.time.LocalDateTime.now())
+                .build();
+
+        storyBookmarkRepository.save(bookmark);
+    }
+
+    @Transactional
+    public void unbookmarkStory(User user, Long storyId) {
+        if (user == null) {
+            throw new UnauthorizedException("Authenticated user is required.");
+        }
+
+        storyRepository.findById(storyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found."));
+
+        StoryBookmark existing = storyBookmarkRepository.findByUserIdAndStoryId(user.getId(), storyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bookmark not found."));
+
+        storyBookmarkRepository.delete(existing);
+    }
+
+    @Transactional(readOnly = true)
+    public List<StoryDTO> getBookmarkedStories(User user) {
+        if (user == null) {
+            throw new UnauthorizedException("Authenticated user is required.");
+        }
+
+        return storyBookmarkRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
+                .stream()
+                .map(bookmark -> toStoryDto(bookmark.getStory()))
+                .toList();
     }
 
     private void enforceCharLimit(String content, int charLimit) {

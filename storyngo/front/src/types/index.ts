@@ -31,6 +31,7 @@ export interface ChapterDTO {
 export interface StoryDetailsDTO {
   story: StoryDTO
   chapters: ChapterDTO[]
+  canAddChapter?: boolean
 }
 
 export interface StoryQualityScoreDTO {
