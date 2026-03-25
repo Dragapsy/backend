@@ -6,7 +6,7 @@ import { EmptyState } from '../components/EmptyState'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { LoadingState } from '../components/LoadingState'
 import { SectionTitle } from '../components/SectionTitle'
-import { StoryCard } from '../components/StoryCard'
+import { StoryGridCard } from '../components/StoryGridCard'
 import type { StoryDTO } from '../types'
 
 export function DraftsPage() {
@@ -71,7 +71,7 @@ export function DraftsPage() {
             }}
           >
             {drafts.map((story) => (
-              <StoryCard key={story.id} story={story} />
+              <StoryGridCard key={story.id} story={story} actionLabel="Reprendre l'ecriture" />
             ))}
           </Box>
         </>
