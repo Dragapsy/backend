@@ -1,146 +1,166 @@
-# StorynGo Backend
+# StorynGo — Backend API
 
-Backend Spring Boot pour StorynGo.
+Plateforme communautaire d'écriture collaborative épisodique.
 
-## Base URL
+> **API REST** · Java 21 · Spring Boot 3.4 · PostgreSQL 16 · JWT
 
-- API locale: `http://localhost:8080/api`
+---
 
-## Base de donnees locale (PostgreSQL)
+## Prérequis
 
-Le projet supporte 2 modes:
-- mode principal (par defaut): PostgreSQL (base reelle)
-- mode secondaire (optionnel): H2 en memoire avec le profil `dev`
+- Java 21+
+- Docker Desktop (pour PostgreSQL)
+- Maven (ou utiliser le wrapper `./mvnw.cmd` inclus)
 
-### 1) Preparer l'environnement (une seule fois)
+---
 
-Depuis `storyngo/back`, copier le fichier d'exemple:
+## Installation et démarrage
+
+### 1. Cloner le dépôt
+
+```bash
+git clone <url-du-depot>
+cd storyngo/back
+```
+
+### 2. Configurer les variables d'environnement
+
+Copier le fichier d'exemple :
 
 ```powershell
 Copy-Item .env.postgres.example .env
 ```
 
-Puis editer `.env` et mettre une vraie valeur pour `JWT_SECRET`.
+Éditer `.env` et définir un `JWT_SECRET` fort (32 caractères minimum) :
 
-### 2) Demarrer PostgreSQL avec Docker
+```env
+JWT_SECRET=votre-secret-long-et-aleatoire-ici
+DB_URL=jdbc:postgresql://localhost:5432/storyngo
+DB_USERNAME=storyngo
+DB_PASSWORD=storyngo_pwd
+```
 
-Toujours dans `storyngo/back`:
+### 3. Démarrer la base de données (PostgreSQL via Docker)
 
-```powershell
+```bash
 docker compose up -d
 ```
 
-Verifier que le container est bien en `healthy`:
+Vérifier que le container est `healthy` :
 
-```powershell
+```bash
 docker compose ps
 ```
 
-### 3) Lancer le backend (PostgreSQL par defaut)
+### 4. Lancer le backend
 
-PowerShell:
-
+**PowerShell :**
 ```powershell
 $env:DB_URL="jdbc:postgresql://localhost:5432/storyngo"
 $env:DB_USERNAME="storyngo"
 $env:DB_PASSWORD="storyngo_pwd"
-$env:JWT_SECRET="votre-secret-long-et-aleatoire"
+$env:JWT_SECRET=[Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Maximum 256 }))
 ./mvnw.cmd spring-boot:run
 ```
 
-Alternative en une ligne:
-
-```powershell
-$env:DB_URL="jdbc:postgresql://localhost:5432/storyngo"; $env:DB_USERNAME="storyngo"; $env:DB_PASSWORD="storyngo_pwd"; $env:JWT_SECRET="votre-secret-long-et-aleatoire"; ./mvnw.cmd spring-boot:run
+**Bash / WSL :**
+```bash
+DB_URL=jdbc:postgresql://localhost:5432/storyngo \
+DB_USERNAME=storyngo \
+DB_PASSWORD=storyngo_pwd \
+JWT_SECRET=votre-secret-long-et-aleatoire \
+./mvnw spring-boot:run
 ```
 
-### 3 bis) Optionnel: lancer en H2 (profil `dev`)
+L'API est disponible sur : `http://localhost:8080/api`
 
-```powershell
-$env:SPRING_PROFILES_ACTIVE="dev"
-$env:JWT_SECRET="votre-secret-long-et-aleatoire"
-./mvnw.cmd spring-boot:run
-```
+---
 
-### 4) Arreter PostgreSQL
+## Lancer les tests
 
-```powershell
-docker compose down
-```
-
-Pour supprimer aussi les donnees (reset complet):
-
-```powershell
-docker compose down -v
-```
-
-### Notes importantes
-
-- PostgreSQL est maintenant la configuration par defaut de l'application.
-- Le seed `data.sql` n'est pas injecte en mode PostgreSQL (`spring.sql.init.mode=never`) pour proteger tes vraies donnees.
-- Le profil `dev` reste disponible pour des essais rapides en H2.
-- Les tests continuent d'utiliser H2 via `application-test.properties`.
-
-## Demarrer
-
-- Lancer l'application :
-
-```powershell
-./mvnw.cmd spring-boot:run
-```
-
-- Lancer les tests :
-
-```powershell
+```bash
 ./mvnw.cmd test
 ```
 
-## Swagger
+Les tests utilisent une base H2 in-memory (pas besoin de Docker).
 
-Swagger UI : `http://localhost:8080/swagger-ui/index.html`
+---
 
-## Documentation API (resume)
+## Documentation API (Swagger)
 
-### Auth
-- `POST /api/auth/register` : inscription, renvoie `AuthResponse`
-- `POST /api/auth/login` : connexion, renvoie `AuthResponse`
+Une fois le backend démarré :
 
-### Stories (lecture)
-- `GET /api/stories` : liste stories
-- `GET /api/stories/trending` : stories tendance
-- `GET /api/stories/{id}` : detail story + chapitres
-- `GET /api/stories/{id}/quality-score` : score metier detaille
+- **Swagger UI** : http://localhost:8080/swagger-ui/index.html
+- **OpenAPI JSON** : http://localhost:8080/v3/api-docs
 
-### Stories (workflow metier)
-- `POST /api/stories` : creation story + chapitre 1
-- `POST /api/stories/{id}/chapters` : ajout chapitre (auteur, `DRAFT`)
-- `PATCH /api/chapters/{id}` : edition chapitre (auteur, `DRAFT`)
-- `POST /api/stories/{id}/submit-review` : `DRAFT -> IN_REVIEW`
-- `POST /api/stories/{id}/approve-review` : `IN_REVIEW -> PUBLISHED` (reviewer/admin)
-- `POST /api/stories/{id}/reject-review` : `IN_REVIEW -> DRAFT` (reviewer/admin)
-- `POST /api/stories/{id}/archive` : `PUBLISHED -> ARCHIVED` (auteur/admin)
+---
 
-### Versions et engagement
-- `GET /api/chapters/{id}/versions` : historique versions
-- `POST /api/chapters/{id}/versions/{versionId}/restore` : restauration version (auteur, `DRAFT`)
-- `POST /api/chapters/{id}/vote` : vote chapitre
-- `GET /api/chapters/{id}/comments` : commentaires
-- `POST /api/chapters/{id}/comments` : ajout commentaire
+## Profils de configuration
 
-## DTO principaux
+| Profil | Base de données | Usage |
+|--------|----------------|-------|
+| (défaut) | PostgreSQL | Production / développement standard |
+| `dev` | H2 in-memory | Tests rapides sans Docker |
+| `test` | H2 in-memory | Suite de tests automatisés |
 
-- Requetes: `RegisterRequest`, `LoginRequest`, `StoryCreateRequest`, `ChapterCreateRequest`, `ChapterUpdateRequest`, `CommentCreateRequest`
-- Reponses: `AuthResponse`, `StoryDTO`, `StoryDetailsDTO`, `ChapterDTO`, `ChapterVersionDTO`, `StoryQualityScoreDTO`, `CommentDTO`, `VoteResultDTO`, `ErrorResponse`
+**Activer le profil dev :**
+```powershell
+$env:SPRING_PROFILES_ACTIVE="dev"
+$env:JWT_SECRET=[Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Maximum 256 }))
+./mvnw.cmd spring-boot:run
+```
 
-## Workflow metier
+---
 
-- Etats story: `DRAFT -> IN_REVIEW -> PUBLISHED -> ARCHIVED`
-- Contraintes fortes:
-	- edition/ajout/restauration de chapitre seulement en `DRAFT`
-	- review reservee aux `REVIEWER`/`ADMIN`
-	- archivage a partir de `PUBLISHED`
-	- controle d'integrite sur l'ordre des chapitres
+## Structure du projet
 
-## Handover
+```
+src/
+├── main/java/com/storyngo/
+│   ├── controllers/       # Endpoints REST (3 controllers)
+│   ├── services/          # Logique métier (10 services)
+│   ├── repositories/      # Accès base de données (13 repositories JPA)
+│   ├── models/            # Entités JPA + enums
+│   ├── dto/               # Objets de transfert (35+ DTOs)
+│   ├── mappers/           # Conversion entités ↔ DTOs (MapStruct)
+│   ├── security/          # JWT Filter + Spring Security config
+│   └── exceptions/        # Exceptions personnalisées + handler global
+└── main/resources/
+    ├── application.properties          # Config principale (PostgreSQL)
+    ├── application-dev.properties      # Config H2 (profil dev)
+    └── application-test.properties     # Config tests
+```
 
-Voir `HANDOVER.md` pour les comptes de test et les IDs utiles.
+---
+
+## Endpoints principaux
+
+| Domaine | Endpoints |
+|---------|-----------|
+| Auth | `POST /api/auth/register`, `POST /api/auth/login` |
+| Stories | `GET /api/stories`, `POST /api/stories`, `GET /api/stories/{id}` |
+| Chapitres | `POST /api/stories/{id}/chapters`, `POST /api/chapters/{id}/vote` |
+| Workflow | `POST /api/stories/{id}/submit-review`, `/approve-review`, `/reject-review` |
+| Admin | `GET /api/admin/users`, `POST /api/admin/users/{id}/ban-*` |
+| Social | `POST /api/social/follow/{id}`, `GET /api/social/feed` |
+| Gamification | `GET /api/gamification/leaderboard` |
+
+Voir la [documentation complète (Swagger)](http://localhost:8080/swagger-ui/index.html) pour tous les endpoints.
+
+---
+
+## Arrêter les services
+
+```bash
+# Arrêter PostgreSQL
+docker compose down
+
+# Arrêter PostgreSQL ET supprimer les données (reset complet)
+docker compose down -v
+```
+
+---
+
+## Comptes de test
+
+Voir `HANDOVER.md` pour les identifiants de test et les IDs utiles.
